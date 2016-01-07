@@ -905,7 +905,6 @@ void NavigationRouteHeuristic::ExpireDataPacketTimer(uint32_t nodeId,uint32_t si
 	NS_LOG_FUNCTION (this<< "ExpireDataPacketTimer id\t"<<nodeId<<"\tsignature:"<<signature);
 	//1. Find the waiting timer
 	EventId& eventid = m_sendingDataEvent[nodeId][signature];
-
 	//2. cancel the timer if it is still running
 	eventid.Cancel();
 }
