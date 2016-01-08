@@ -390,6 +390,7 @@ void NavigationRouteHeuristic::OnData(Ptr<Face> face, Ptr<Data> data)
 			m_sendingDataEvent[nodeId][signature]=
 								Simulator::Schedule(sendInterval,
 								&NavigationRouteHeuristic::ForwardResourcePacket, this,data);
+			return;
 		}//end if(!isDuplicatedData(nodeId,signature))
 		else   //重复包
 		{
@@ -399,39 +400,115 @@ void NavigationRouteHeuristic::OnData(Ptr<Face> face, Ptr<Data> data)
 				m_dataSignatureSeen.Put(data->GetSignature(),true);
 				return;
 			}
-			else
+			else if(m_sensor->getLane() == preLane)
 			{
-				if(m_sensor->getLane() == preLane)
-				{
-					ExpireDataPacketTimer(nodeId,signature);
-					m_dataSignatureSeen.Put(data->GetSignature(),true);
-					return;
-				}
+				ExpireDataPacketTimer(nodeId,signature);
+				m_dataSignatureSeen.Put(data->GetSignature(),true);
+				return;
 			}
 		}//end duplicate packet
 	}//end if (RESOURCE_PACKET == packetTypeTag.Get())
 	else if (DATA_PACKET == packetTypeTag.Get())
 	{
-
+		if(!isDuplicatedData(nodeId,signature))
+		{
+			//ToContentStore(data);
+			//if(有PIT表项)
+			{
+				double disX = ( x - m_sensor->getX()) > 0 ? (x - m_sensor->getX()) : (m_sensor->getX() - x);
+				double disY = ( y - m_sensor->getY()) > 0 ? (y - m_sensor->getY()) : (m_sensor->getY() - y);
+				double distance = disX + disY;
+				double interval = (500 - distance) * 10;
+				if(OnTheWay(laneList))
+				{
+					Time sendInterval = (MilliSeconds(interval) + m_gap * m_timeSlot);
+					m_sendingDataEvent[nodeId][signature]=
+									Simulator::Schedule(sendInterval,
+									&NavigationRouteHeuristic::ForwardDataPacket, this,data);
+					//delete pit
+					return;
+				}
+				else if(m_sensor->getLane() == preLane)
+				{
+					Time sendInterval = (MilliSeconds(interval) + (m_gap+5) * m_timeSlot);
+					m_sendingDataEvent[nodeId][signature]=
+									Simulator::Schedule(sendInterval,
+									&NavigationRouteHeuristic::ForwardDataPacket, this,data);
+					//delete pit
+					return;
+				}
+			}
+			//else//无对应表项
+			{
+				m_dataSignatureSeen.Put(data->GetSignature(),true);
+				return;
+				//丢包
+			}
+		}
+		else//重复包
+		{
+			ExpireDataPacketTimer(nodeId,signature);
+			m_dataSignatureSeen.Put(data->GetSignature(),true);
+			return;
+			//丢包
+		}
 	}
 	else if(CONFIRM_PACKET == packetTypeTag.Get())
 	{
-
+		if(!isDuplicatedData(nodeId,signature))
+		{
+			//if(FIB有对应表项)
+			{
+				m_dataSignatureSeen.Put(data->GetSignature(),true);
+				return;
+			}
+			//建立FIB表项
+			double disX = ( x - m_sensor->getX()) > 0 ? (x - m_sensor->getX()) : (m_sensor->getX() - x);
+			double disY = ( y - m_sensor->getY()) > 0 ? (y - m_sensor->getY()) : (m_sensor->getY() - y);
+			double distance = disX + disY;
+			double interval = (500 - distance) * 10;
+			if(m_sensor->getLane() == currentLane)
+			{
+				Time sendInterval = (MilliSeconds(interval) + m_gap * m_timeSlot);
+				m_sendingDataEvent[nodeId][signature]=
+								Simulator::Schedule(sendInterval,
+								&NavigationRouteHeuristic::ForwardConfirmPacket, this,data);
+				//delete pit
+				return;
+			}
+			else if(m_sensor->getLane() == preLane)
+			{
+				Time sendInterval = (MilliSeconds(interval) + (m_gap+5) * m_timeSlot);
+				m_sendingDataEvent[nodeId][signature]=
+								Simulator::Schedule(sendInterval,
+								&NavigationRouteHeuristic::ForwardConfirmPacket, this,data);
+				//delete pit
+				return;
+			}
+			else
+			{
+				m_dataSignatureSeen.Put(data->GetSignature(),true);
+				return;
+			}
+		}
+		else
+		{
+			ExpireDataPacketTimer(nodeId,signature);
+			m_dataSignatureSeen.Put(data->GetSignature(),true);
+			return;
+		}
 	}
 	else if(TABLE_PACKET == packetTypeTag.Get())
 	{
-
+		//if(pit.empty)
+		{
+			//维护表格
+		}
 	}
-	ToContentStore(data);
-
-	Ptr<pit::Entry> Will = WillInterestedData(data);
-	Ptr<pit::nrndn::EntryNrImpl> entry = DynamicCast<pit::nrndn::EntryNrImpl>(Will);
-
 	return;
 }
 
-pair<bool, double>
-NavigationRouteHeuristic::packetFromDirection(Ptr<Interest> interest)
+pair<bool, double> NavigationRouteHeuristic::packetFromDirection(Ptr<Interest> interest)
 {
 	NS_LOG_FUNCTION (this);
 	Ptr<const Packet> nrPayload	= interest->GetPayload();
@@ -443,6 +520,14 @@ NavigationRouteHeuristic::packetFromDirection(Ptr<Interest> interest)
 			m_sensor->getDistanceWith(nrheader.getX(),nrheader.getY(),route);
 
 	return result;
+}
+
+bool NavigationRouteHeuristic::OnTheWay(std::vector<std::string> laneList)
+{
+	for(uint32_t i = 0; i < laneList.size(); ++i)
+		if(m_sensor->getLane() == laneList[i])
+			return true;
+	return false;
 }
 
 bool NavigationRouteHeuristic::isDuplicatedInterest(
@@ -534,47 +619,95 @@ void NavigationRouteHeuristic::ForwardResourcePacket(Ptr<Data> src)
 	SendDataPacket(data);
 }
 
-void NavigationRouteHeuristic::ForwardDataPacket(Ptr<Data> src,std::vector<uint32_t> newPriorityList,bool IsClearhopCountTag)
+void NavigationRouteHeuristic::ForwardConfirmPacket(Ptr<Data> src)
 {
 	if(!m_running) return;
-	//NS_ASSERT_MSG(false,"NavigationRouteHeuristic::ForwardDataPacket");
-	NS_LOG_FUNCTION (this);
-	uint32_t sourceId=0;
-	uint32_t signature=0;
-	// 1. record the Data Packet(only record the forwarded packet)
-	m_dataSignatureSeen.Put(src->GetSignature(),true);
 
-	// 2. prepare the data
 	Ptr<Packet> nrPayload=src->GetPayload()->Copy();
 	//Ptr<Packet> newPayload	= Create<Packet> ();
-	ndn::nrndn::nrHeader nrheader;
+	ndn::nrndn::nrndnHeader nrheader;
 	nrPayload->RemoveHeader(nrheader);
 	double x= m_sensor->getX();
 	double y= m_sensor->getY();
-	sourceId = nrheader.getSourceId();
-	signature = src->GetSignature();
+	std::vector<std::string> lanelist = nrheader.getLaneList();
+	std::string currentlane;
+	for(uint32_t i = lanelist.size()-1; i >=0; --i)
+	{
+		if(i == 0)
+			currentlane = lanelist[i];
+		else if(m_sensor->getLane() == lanelist[i])
+		{
+			currentlane = lanelist[i-1];
+			break;
+		}
+	}
+	std::string prelane = m_sensor->getLane();
 
 	// 	2.1 setup nrheader, source id do not change
 	nrheader.setX(x);
 	nrheader.setY(y);
-	nrheader.setPriorityList(newPriorityList);
+	nrheader.setCurrentLane(currentlane);
+	nrheader.setPreLane(prelane);
 	nrPayload->AddHeader(nrheader);
 
 	// 	2.2 setup FwHopCountTag
-	//FwHopCountTag hopCountTag;
-	//if (!IsClearhopCountTag)
-	//	nrPayload->PeekPacketTag( hopCountTag);
-//	newPayload->AddPacketTag(hopCountTag);
+	FwHopCountTag hopCountTag;
+	nrPayload->RemovePacketTag( hopCountTag);
+	hopCountTag. Increment();
+	if(hopCountTag.Get() > 5)
+	{
+		m_dataSignatureSeen.Put(src->GetSignature(),true);
+		return;
+	}
+	nrPayload->AddPacketTag(hopCountTag);
 
 	// 	2.3 copy the data packet, and install new payload to data
 	Ptr<Data> data = Create<Data> (*src);
 	data->SetPayload(nrPayload);
 
+	m_dataSignatureSeen.Put(src->GetSignature(),true);
 	// 3. Send the data Packet. Already wait, so no schedule
 	SendDataPacket(data);
+}
 
-	// 4. record the forward times
-	//////ndn::nrndn::nrUtils::IncreaseForwardCounter(sourceId,signature);
+void NavigationRouteHeuristic::ForwardDataPacket(Ptr<Data> src)
+{
+		if(!m_running) return;
+
+		Ptr<Packet> nrPayload=src->GetPayload()->Copy();
+		ndn::nrndn::nrndnHeader nrheader;
+		nrPayload->RemoveHeader(nrheader);
+		double x= m_sensor->getX();
+		double y= m_sensor->getY();
+		std::string prelane = m_sensor->getLane();
+		std::vector<std::string> lanelist;
+		///检查PIT表项，维护lanelist（备选下一跳）
+
+		// 	2.1 setup nrheader, source id do not change
+		nrheader.setX(x);
+		nrheader.setY(y);
+		nrheader.setPreLane(prelane);
+		nrheader.setLaneList(lanelist);
+		nrPayload->AddHeader(nrheader);
+
+		// 	2.2 setup FwHopCountTag
+		FwHopCountTag hopCountTag;
+		nrPayload->RemovePacketTag( hopCountTag);
+		hopCountTag. Increment();
+		if(hopCountTag.Get() > 15)
+		{
+			m_dataSignatureSeen.Put(src->GetSignature(),true);
+			return;
+		}
+		nrPayload->AddPacketTag(hopCountTag);
+
+		// 	2.3 copy the data packet, and install new payload to data
+		Ptr<Data> data = Create<Data> (*src);
+		data->SetPayload(nrPayload);
+
+		m_dataSignatureSeen.Put(src->GetSignature(),true);
+		// 3. Send the data Packet. Already wait, so no schedule
+		SendDataPacket(data);
 }
 
 void NavigationRouteHeuristic::ForwardInterestPacket(Ptr<Interest> src)
