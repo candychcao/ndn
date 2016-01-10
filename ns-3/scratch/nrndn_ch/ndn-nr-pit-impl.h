@@ -103,8 +103,13 @@ public:
    * not simply add the name into the pit
    * multi entry of pit will be operated
    */
-  bool UpdatePit(const std::vector<std::string>& route,const uint32_t& id);
+  //bool UpdatePit(const std::vector<std::string>& route,const uint32_t& id);
 
+  //add by DJ on Jan 4,2016:update pit
+  bool UpdatePit(std::string lane,Ptr<const Interest> interest);
+
+  //add by DJ on Jan 4,2016:update pit
+  bool RemovePitEntry(const Name& name);
 
   void laneChange(std::string oldLane, std::string newLane);
 

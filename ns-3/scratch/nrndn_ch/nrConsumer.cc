@@ -18,6 +18,7 @@
 #include "NodeSensor.h"
 #include "nrHeader.h"
 #include "nrUtils.h"
+#include "nrndn-Header.h"
 
 NS_LOG_COMPONENT_DEFINE ("ndn.nrndn.nrConsumer");
 
@@ -191,6 +192,18 @@ void nrConsumer::SendPacket()
 	  NS_LOG_INFO ("> Interest for " <<nameWithSequence->toUri()<<" seq "<< seq);
 
 	  //WillSendOutInterest (seq);
+
+	  ndn::nrndn::nrndnHeader nrheader;
+	  	nrheader.setSourceId(GetNode()->GetId() );
+	  	nrheader.setX(m_sensor->getX());
+	  	nrheader.setY(m_sensor->getY());
+	  	string lane = m_sensor->getLane();
+	  	nrheader.setCurrentLane(lane);
+	  	nrheader.setPreLane(lane);
+	  	Ptr<Packet> newPayload	= Create<Packet> ();
+	  	newPayload->AddHeader(nrheader);
+
+	  	interest->SetPayload(newPayload);
 
 	  FwHopCountTag hopCountTag;
 	  interest->GetPayload ()->AddPacketTag (hopCountTag);

@@ -84,7 +84,7 @@ NrPitImpl::NotifyNewAggregate ()
 
   Pit::NotifyNewAggregate ();
 }
-
+/*
 bool NrPitImpl::UpdatePit(const std::vector<std::string>& route,const uint32_t& id)
 {
 	std::ostringstream os;
@@ -112,6 +112,56 @@ bool NrPitImpl::UpdatePit(const std::vector<std::string>& route,const uint32_t& 
 	//NS_LOG_UNCOND("update pit:"<<os.str());
 	NS_LOG_DEBUG("update pit:"<<os.str());
 	return true;
+}*/
+
+//add by DJ on Jan 4,2016:update pit
+bool NrPitImpl::UpdatePit(std::string lane,Ptr<const Interest> interest)
+{
+	//std::ostringstream os;
+	std::vector<Ptr<Entry> >::iterator pit=m_pitContainer.begin();
+	Ptr<Entry> entry = *pit;
+
+
+	//Can name::Component use "=="?
+	//std::vector<std::string>::const_iterator it=
+	//		std::find(route.begin(),route.end(),head->toUri());
+
+		//return false;
+		//pitEntry->AddIncomingNeighbors(id,interest);
+	//else
+		//pitEntry->RemoveIncomingNeighbors(interest->GetName());
+	for(;pit!=m_pitContainer.end();++pit)
+	{
+		Ptr<EntryNrImpl> pitEntry = DynamicCast<EntryNrImpl>(*pit);
+		//const name::Component &pitName=(*pit)->GetInterest()->GetName().get(0);
+		if(pitEntry->getEntryName() == interest->GetName().toUri())
+		{
+			std::unordered_set< std::string >::iterator it = pitEntry->getIncomingnbs().find(lane);
+			if(it==pitEntry->getIncomingnbs().end())
+				pitEntry->AddIncomingNeighbors(lane);
+			//os<<(*pit)->GetInterest()->GetName().toUri()<<" add Neighbor "<<id<<' ';
+		}
+
+
+	}
+	//NS_LOG_UNCOND("update pit:"<<os.str());
+	//NS_LOG_DEBUG("update pit:"<<os.str());
+	return true;
+}
+
+//add by DJ on Jan 4,2016:update pit
+bool NrPitImpl::RemovePitEntry(const Name& name){
+	std::vector<Ptr<Entry> >::iterator pit=m_pitContainer.begin();
+	Ptr<Entry> entry = *pit;
+	for(;pit!=m_pitContainer.end();++pit){
+		Ptr<EntryNrImpl> pitEntry = DynamicCast<EntryNrImpl>(*pit);
+		if(pitEntry->getEntryName() == name.toUri())
+		{
+			pitEntry->RemoveIncomingNeighbors(name.toUri());
+			return true;
+		}
+	}
+	return false;
 }
 
 void
@@ -166,6 +216,7 @@ NrPitImpl::Create (Ptr<const Interest> header)
 	return 0;
 }
 
+//need to modify:how to initialize?
 bool
 NrPitImpl::InitializeNrPitEntry()
 {
@@ -275,6 +326,9 @@ std::string NrPitImpl::uriConvertToString(std::string str)
 	}
 	return ret;
 }
+
+
+//laneChange means sending packet back to neighbors in last hop whether forward its data packets or not?
 void NrPitImpl::laneChange(std::string oldLane, std::string newLane)
 {
 	if (oldLane.empty()

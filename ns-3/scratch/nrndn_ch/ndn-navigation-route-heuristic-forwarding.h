@@ -46,54 +46,16 @@ public:
 	static TypeId
 	GetTypeId(void);
 
-
-
-	/**
-	 * \brief	Start protocol operation,
-	 *          You should execute Start() to make the forwarding strategy start to work
-	 *          It will NOT start/stop automatically!
-	 */
 	void Start ();
 
-	/**
-	 * \brief	Stop protocol operation,
-	 *          stop it using Stop().
-	 *          It will NOT start/stop automatically!
-	 */
 	void Stop ();
 
+	virtual void OnInterest(Ptr<Face> face, Ptr<Interest> interest);
 
-	/**
-	 * \brief Actual processing of incoming Ndn interests.
-	 *        overwrite the ForwardingStrategy::OnInterest
-	 *        to do some works using navigation route
-	 *
-	 * Processing Interest packets
-	 * @param face     incoming face
-	 * @param interest Interest packet
-	 */
-	virtual void
-	OnInterest(Ptr<Face> face, Ptr<Interest> interest);
+	virtual void OnData(Ptr<Face> face, Ptr<Data> data);
 
-	/**
-	 * \brief Actual processing of incoming Ndn content objects
-	 *
-	 * Processing Data packets
-	 * @param face    incoming face
-	 * @param data    Data packet
-	 */
-	virtual void
-	OnData(Ptr<Face> face, Ptr<Data> data);
-
-
-	/**
-	 * @brief Default constructor
-	 */
 	NavigationRouteHeuristic ();
 
-	/**
-	 * @brief Default constructor
-	 */
 	virtual ~NavigationRouteHeuristic ();
 
 	const Ptr<ndn::nrndn::NodeSensor>& getSensor() const
@@ -101,26 +63,12 @@ public:
 		return m_sensor;
 	}
 
-	 /**
-	 * @brief Event fired every time face is added to NDN stack
-	 * @param face face to be removed
-	 */
-	virtual void
-	AddFace(Ptr<Face> face);
+	virtual void AddFace(Ptr<Face> face);
 
-	 /**
-	 * @brief Event fired every time face is removed from NDN stack
-	 * @param face face to be removed
-	 *
-	 * For example, when an application terminates, AppFace is removed and this method called by NDN stack.
-	 */
-	virtual void
-	RemoveFace(Ptr<Face> face);
+	virtual void RemoveFace(Ptr<Face> face);
 
-	//uint32_t GetCacheSize() const { return m_CacheSize;	}
-	//void SetCacheSize(uint32_t cacheSize);
+	//void laneChange(std::string, std::string);
 
-	// If the interest packet is hello message, its scope will be set as HELLO_MESSAGE = 2;
 	enum
 	{
   		RESOURCE_PACKET = 1,        //资源包，data packet
@@ -128,7 +76,7 @@ public:
   		DETECT_PACKET = 3,              //探测包，interest packet
   		INTEREST_PACKET = 4,          //兴趣包，interest packet
   		CONFIRM_PACKET = 5,         //确认包，data packet
-  		HELLO_MESSAGE = 6,            //心跳包，interest packet
+  		HELLO_PACKET = 6,            //心跳包，interest packet
   		MOVE_TO_NEW_LANE = 7,   //消费者移动到新路段，通知上一跳是否转发数据包，interest packet
   		ASK_FOR_TABLE = 8,               //车辆移动到新路段，向邻居请求表格，interest packet
   		TABLE_PACKET = 9,                  //回复新到的车辆本路段表格，data packet
@@ -139,297 +87,71 @@ protected:
 	WillSatisfyPendingInterest(Ptr<Face> inFace, Ptr<pit::Entry> pitEntry);
 
 	virtual bool
-	DoPropagateInterest(Ptr<Face> inFace, Ptr<const Interest> interest,
-			Ptr<pit::Entry> pitEntry);
+	DoPropagateInterest(Ptr<Face> inFace, Ptr<const Interest> interest,Ptr<pit::Entry> pitEntry);
 
 	virtual void
 	WillEraseTimedOutPendingInterest(Ptr<pit::Entry> pitEntry);
 
 	virtual void
-	DidReceiveValidNack(Ptr<Face> incomingFace, uint32_t nackCode,
-			Ptr<const Interest> nack, Ptr<pit::Entry> pitEntry);
+	DidReceiveValidNack(Ptr<Face> incomingFace, uint32_t nackCode,Ptr<const Interest> nack, Ptr<pit::Entry> pitEntry);
 
 	virtual void NotifyNewAggregate (); ///< @brief Even when object is aggregated to another Object
 
 	virtual void DoInitialize(void);
 
-
-
 private:
-	//Some Utils functions aboute navigation route
 
-	/**
-	 * @brief Get priority list of interest packet
-	 * @param route		the navigation route which is to be compared
-	 * \return priority list
-	 */
-	std::vector<uint32_t> GetPriorityList(const vector<string>& route);
-
-	/**
-	 * @brief Get priority list of interest packet. default route is the local node's navigation route
-	 * \return priority list
-	 */
-	std::vector<uint32_t> GetPriorityList();
-
-	/**
-	 * @brief Get priority list of data packet from the source node
-	 * @param dataName	the name of the data packet
-	 * \return priority list
-	 */
-	std::vector<uint32_t> GetPriorityListOfDataSource(const Name& dataName);
-
-
-	/**
-	 * @brief	Get priority list of data packet from the forwarding node which is interested about the data
-	 * 			if a node is interest about the data, it will know which node behind will interested.
-	 * 			First sort the interest nodes, 	then add not interested nodes
-	 * 			list structure:
-	 * 			slot1	|	interest node 1 |
-	 * 			slot2	|	interest node 2 |
-	 * 			slop...i|...................|
-	 * 			slot i+1|disinterested node1|
-	 * 			slot i+2|disinterested node2|
-	 * 			slot i.n|...................|
-	 * @param interestNodes	the list of the interested
-	 * @param recPri 		priority list from last hop
-	 * \return priority list
-	 */
-	std::vector<uint32_t>
-	GetPriorityListOfDataForwarderInterestd(
-			const std::unordered_set<uint32_t>& interestNodes,
-			const std::vector<uint32_t>& recPri);
-
-	/**
-	 * @brief	Get priority list of data packet from the forwarding node which is disinterested about the data
-	 * 			if a node is disinterested about the data, it will NOT know which node behind will interested.
-	 * 			Just Sort the neighbors by distance
-	 * 			List structure:
-	 * 			slot 1	|neighbor node1|
-	 * 			slot 2	|neighbor node2|
-	 * 			slot ...|..............|
-	 *
-	 *@param recPri 		priority list from last hop
-	 * \return priority list
-	 */
-	std::vector<uint32_t> GetPriorityListOfDataForwarderDisinterestd(const std::vector<uint32_t>& recPri);
-
-	/**
-	 * @brief Get Customize data for navigation route heuristic forwarding
-	 * @param type		type of Packet which is to sent
-	 * @param srcPayload the original payload from src packet
-	 * @param dataName  the data name of the Packet. If it is an interest packet, just give empty reference: *((Name*)NULL)
-	 * \return	Payload packet
-	 */
-	Ptr<Packet> GetNrPayload(HeaderHelper::Type type, Ptr<const Packet> srcPayload,const Name& dataName = *((Name*)NULL));
-
-	/**
-	  * \brief	Process hello message
-	  */
 	void ProcessHello (Ptr<Interest> interest);
 
-	/**
-	 * \brief	Tell the direction of the Packet from
-	 *          the front and behind is Only base on the moving direction of received Packet
-	 * \return	(true,+value) if it is from the front
-	 * 			(true,-value) if it is from behind
-	 * 			(false,-1)    if it is not on the route of the packet
-	 *
-	*/
-	pair<bool, double>
-				packetFromDirection(Ptr<Interest> interest);
-
-	/**
-	 * \brief	Given a route information, this method should tell whether the received node
-	 *			is on the route of the packet
-	 *			It should satisfy 2 conditions:
-	 *			1. the packet and the received node is moving to the same direction
-	 *			2. the received node is on the route of the packet
-	 *	\return	true if it is on the route of the packet
-	 */
-	//bool onTheRouteOfPacket(Ptr<Interest> interest);
-
-	/**
-	 * 	\brief	recognize the duplicated interest
-	 *	@param	id    the node id of the interest packet
-	 *	@param  seq   the nonce of the interest packet
-	 *	\return	true if it is duplicated
-	 */
-	bool isDuplicatedInterest(uint32_t id, uint32_t nonce);
-
-	/**
-	 * 	\brief	recognize the duplicated data
-	 *	@param	id    the node id of the data packet
-	 *	@param  seq   the nonce of the data packet
-	 *	\return	true if it is duplicated
-	 */
-	bool isDuplicatedData(uint32_t id, uint32_t signature);
-
-	/**
-	 * 	\brief	this designed is different from normal NDN nodes.
-	 * 			Each node is selfish, and only concern about the information which may helpful for itself.
-	 * 			This function will determinate whether the data will interested by the node itself,(eg, on the route of itself)
-	 * 			If the data will not interested by the node itself, it will not use this data
-	 * 			to satisfy the interest packet sent from other nodes to it.
-	 *	@param	data    data packet
-	 *	\return	Ptr<pit::Entry> if it will interested(In PIT)
-	 */
-	Ptr<pit::Entry>
-	WillInterestedData(Ptr<const Data> data);
-
-	/**
-	 * \brief	drop the data
-	 * 			Simply do nothing
-	 */
-	void DropPacket();
-
-	/**
-	 * \brief	drop the data
-	 * 			may record the data for statistics reason
-	 */
-	void DropDataPacket(Ptr<Data> data);
-
-	/**
-	 * \brief	drop the interest packet
-	 * 			may record the data for statistics reason
-	 */
-	void DropInterestePacket(Ptr<Interest> interest);
-
-	/**
-	 * 	\brief	mark the duplicated interest
-	 *	@param	interest    Interest packet
-	 */
-	//void MarkDuplicatedInterest(Ptr<const Interest> interest);
-
-	/**
-	 * \brief	Schedule next send of hello message
-	 */
 	void HelloTimerExpire ();
 
-	/**
-	 * \brief	When a neighbor loses contact with it, this
-	 *          funciton will be invoked
-	 */
 	void FindBreaksLinkToNextHop(uint32_t BreakLinkNodeId);
 
-	/**
-	 * \brief	send the hello message
-	 */
-	void SendHello ();
+	bool OnTheWay(std::vector<std::string> laneList);
 
-	/**
-	 * 	\brief	Determin whether a given location is in the front of the node
-	 *	@param	lane	lane of given location
-	 *	@param	pos		offset of lane of given location
-	 *	@param  route   navigation route
-	 *	\return	(true,distance)
-	 *					 if it is in the front of the node, and along with the distance
-	 *			(false,0)
-	 *					otherwise
-	 */
-	//pair<bool, double> IsPositionInFront(const string& lane,const double &pos,const std::vector<std::string>& route);
+	void ToContentStore(Ptr<Data> data);
 
-	/**
-	 * 	\brief	Determin whether a rest route from the interest packet is covered by the local node
-	 * 	        eg.
-	 * 	        remote route in interest packet:
-	 * 	        ======.=====|=============|===========|===========|========|
-	 * 	        	R1			R2			 R3				R4			R5
-	 * 	        Route of local node:
-	 * 	        ============|=============|======.====|===========|========|======|......
-	 * 	        	R6			R7			 R3	 ^			R4			R5		R8
-	 * 	        								 |=>current position of node
-	 * 	        That means this node cover the rest route of the interest packet
-	 *	@param	remoteRoute	the route to be compared
-	 *	\return	(true) if it is covered by the local node
-	 *			(false)	otherwise
-	 */
-	bool PitCoverTheRestOfRoute(const vector<string>& remoteRoute);
+	void NotifyUpperLayer(Ptr<Data> data);
 
 
-	vector<string> ExtractRouteFromName(const Name& name);
-
-	/**
-	 * 	\brief	Expire the InterestPacketTimer, if the TimerCallbackFunciton is already executed,
-	 * 			it will do nothing
-	 * 	@param  nodeId	node id
-	 *	@param  seq		sequence number
-	 */
 	void ExpireInterestPacketTimer(uint32_t nodeId,uint32_t seq);
 
-	/**
-	 * 	\brief	Expire the DataPacketTimer, if the TimerCallbackFunciton is already executed,
-	 * 			it will do nothing
-	 * 	@param  nodeId	node id
-	 * 	@param  signature node signature
-	 */
 	void ExpireDataPacketTimer(uint32_t nodeId,uint32_t signature);
 
-	/**
-	 * \brief	Broadcast stop message
-	 * 			That is: change the nackType from NORMAL_INTEREST to NACK_LOOP,
-	 * 			representing it is a Duplicated Interest
-	 */
-	void BroadcastStopMessage(Ptr<Interest> src);
+	bool isDuplicatedInterest(uint32_t id, uint32_t nonce);
 
-	/**
-	 * \brief	Broadcast stop message
-	 * 			Stop message contains an empty priority list,
-	 * 			representing it is a Duplicated Data
-	 */
-	void BroadcastStopMessage(Ptr<Data> src);
+	bool isDuplicatedData(uint32_t id, uint32_t signature);
 
-	/**
-	 * \brief	the function which will be executed after InterestPacketTimer expire
-	 */
+
+	void DropPacket();
+
+	void DropDataPacket(Ptr<Data> data);
+
+	void DropInterestePacket(Ptr<Interest> interest);
+
+
 	void ForwardInterestPacket(Ptr<Interest>);
 
-	/**
-	 * \brief	the function which will be executed after DataPacketTimer expire
-	 * @param	src	the data packet received
-	 * @param	newPriorityList the new priority list generated at OnData() function
-	 * @param	IsClearhopCountTag  indicating that whether to reset the hop count tag to 0
-	 *                              True means needs to reset to 0;
-	 */
+	void ForwardDetectPacket(Ptr<Interest>);
+
 	void ForwardDataPacket(Ptr<Data> src);
 
 	void ForwardConfirmPacket(Ptr<Data> src);
 
 	void ForwardResourcePacket(Ptr<Data> src);
 
-	/**
-	 * \brief	Send the interest packet immediately,
-	 * 			remember to wait a random interval before execute this function
-	 */
+
+	void ReplyConfirmPacket(Ptr<Interest> interest);
+
+	void ReplyTablePacket(Ptr<Interest> interest);
+
+
 	void SendInterestPacket(Ptr<Interest> interest);
 
-	/**
-	 * \brief	Send the data packet immediately,
-	 * 			remember to wait a random interval before execute this function
-	 */
 	void SendDataPacket(Ptr<Data> data);
 
-	bool OnTheWay(std::vector<std::string> laneList);
+	void SendHello ();
 
-	/**
-	 * \brief	just for lookup easier
-	 */
-	std::unordered_set<uint32_t>
-	converVectorList(const std::vector<uint32_t>& list);
-
-	/**
-	 * \brief	To be discussed: Whether to store the data packet or not?
-	 * 			2015/02/19:	Temporarily do nothing.
-	 */
-	void ToContentStore(Ptr<Data> data);
-
-	/**
-	 * \brief	When a data packet which the node interested has been received,
-	 * 			the upper layer will be notified.
-	 * 													 ------------
-	 * 			ForwardingStrategy<==Face::ReceiveData <-|	Face	|->Face::SendData==>other app/dev bind with face
-	 * 				::OnData				/Interest	 ------------	    /Interest
-	 */
-	void NotifyUpperLayer(Ptr<Data> data);
 
 private:
 	typedef GreenYellowRed super;
@@ -485,6 +207,10 @@ private:
 	uint32_t m_TTLMax;// \brief This value indicate that when a data is received by disinterested node, the max hop count it should be forwarded
 
 	bool NoFwStop;// \brief When the PIT covers the nodes behind, no broadcast stop message
+
+	uint32_t m_virtualPayloadSize;
+
+	Time m_freshness;
 };
 } /* namespace nrndn */
 } /* namespace fw */

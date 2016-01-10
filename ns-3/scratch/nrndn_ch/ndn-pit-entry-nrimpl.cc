@@ -21,9 +21,9 @@ class Pit;
 
 namespace pit {
 namespace nrndn{
-EntryNrImpl::EntryNrImpl(Pit &container, Ptr<const Interest> header,Ptr<fib::Entry> fibEntry,Time cleanInterval)
-	:Entry(container,header,fibEntry),
-	 m_infaceTimeout(cleanInterval)
+EntryNrImpl::EntryNrImpl(Pit &container, Ptr<const Interest> header,Ptr<fib::Entry> fibEntry)
+	:Entry(container,header,fibEntry)
+	 //m_infaceTimeout(cleanInterval)
 {
 	NS_ASSERT_MSG(header->GetName().size()<2,"In EntryNrImpl, "
 			"each name of interest should be only one component, "
@@ -37,16 +37,16 @@ EntryNrImpl::~EntryNrImpl ()
   
 }
 
-std::unordered_set< uint32_t >::iterator
-EntryNrImpl::AddIncomingNeighbors(uint32_t id)
+std::unordered_set< std::string  >::iterator
+EntryNrImpl::AddIncomingNeighbors(std::string lane)
 {
-	AddNeighborTimeoutEvent(id);
-	std::unordered_set< uint32_t >::iterator incomingnb = m_incomingnbs.find(id);
+	//AddNeighborTimeoutEvent(id);
+	std::unordered_set< std::string >::iterator incomingnb = m_incomingnbs.find(lane);
 
 	if(incomingnb==m_incomingnbs.end())
 	{//Not found
-		std::pair<std::unordered_set< uint32_t >::iterator,bool> ret =
-				m_incomingnbs.insert (id);
+		std::pair<std::unordered_set< std::string >::iterator,bool> ret =
+				m_incomingnbs.insert (lane);
 		return ret.first;
 	}
 	else
@@ -55,7 +55,7 @@ EntryNrImpl::AddIncomingNeighbors(uint32_t id)
 	}
 }
 
-void EntryNrImpl::AddNeighborTimeoutEvent(uint32_t id)
+/*void EntryNrImpl::AddNeighborTimeoutEvent(uint32_t id)
 {
 	if(m_nbTimeoutEvent.find(id)!=m_nbTimeoutEvent.end())
 	{
@@ -67,11 +67,13 @@ void EntryNrImpl::AddNeighborTimeoutEvent(uint32_t id)
 	                   = Simulator::Schedule(m_infaceTimeout,
 	                		   &EntryNrImpl::CleanExpiredIncomingNeighbors,this,id);
 }
+*/
 
+/*
 void EntryNrImpl::CleanExpiredIncomingNeighbors(uint32_t id)
 {
 	std::unordered_set< uint32_t >::iterator it;
-
+*/
 	//std::ostringstream os;
 	//os<<"At PIT Entry:"<<GetInterest()->GetName().toUri()<<" To delete neighbor:"<<id;
 	/*
@@ -81,14 +83,28 @@ void EntryNrImpl::CleanExpiredIncomingNeighbors(uint32_t id)
 		os<<*it<<"\t";
 	}
 	*/
+/*
 	NS_LOG_DEBUG("At PIT Entry:"<<GetInterest()->GetName().toUri()<<" To delete neighbor:"<<id);
 
 	std::unordered_set< uint32_t >::iterator incomingnb  = m_incomingnbs.find(id);
 
 	if (incomingnb != m_incomingnbs.end())
 		m_incomingnbs.erase(incomingnb);
+}*/
+
+//add by DJ on Jan 4,2016:when it receives corresponding data packet,remove the pit entry
+void EntryNrImpl::RemoveIncomingNeighbors(std::string name){
+	std::unordered_set< std::string >::iterator it;
+    if(name==m_interest_name){
+    	for(it=m_incomingnbs.begin();it!=m_incomingnbs.end();++it)
+    		{
+    			m_incomingnbs.erase(it);
+    		}
+    }
+
 }
 
+/*
 void EntryNrImpl::RemoveAllTimeoutEvent()
 {
 	std::unordered_map< uint32_t,EventId>::iterator it;
@@ -97,7 +113,7 @@ void EntryNrImpl::RemoveAllTimeoutEvent()
 		it->second.Cancel();
 		Simulator::Remove (it->second); // slower, but better for memory
 	}
-}
+}*/
 
 } // namespace nrndn
 } // namespace pit

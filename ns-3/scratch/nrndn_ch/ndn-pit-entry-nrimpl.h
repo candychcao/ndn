@@ -35,14 +35,14 @@ class EntryNrImpl : public Entry
 public:
 	typedef Entry super;
 
-	EntryNrImpl(Pit &container, Ptr<const Interest> header,Ptr<fib::Entry> fibEntry,Time cleanInterval);
+	EntryNrImpl(Pit &container, Ptr<const Interest> header,Ptr<fib::Entry> fibEntry);
 	virtual ~EntryNrImpl();
 	
 	/**
 	 * @brief Remove all the timeout event in the timeout event list
 	 *
 	 */
-	void RemoveAllTimeoutEvent();
+	//void RemoveAllTimeoutEvent();
 
 	/**
 	 * @brief Add `id` to the list of incoming neighbor list(m_incomingnbs)
@@ -50,24 +50,36 @@ public:
 	 * @param id Neighbor id to add to the list of incoming neigbhor list
 	 * @returns iterator to the added neighbor id
 	 */
-	std::unordered_set< uint32_t >::iterator
-	AddIncomingNeighbors(uint32_t id);
+	std::unordered_set< std::string >::iterator
+	AddIncomingNeighbors(std::string lane);
 
-	const std::unordered_set<uint32_t>& getIncomingnbs() const
+	const std::unordered_set<std::string >& getIncomingnbs() const
 	{
 		return m_incomingnbs;
 	}
 
-private:
-	void AddNeighborTimeoutEvent(uint32_t id);
+	//add by DJ on Jan 4,2016:when receive corresponding data packet,remove the pit entry
+	void RemoveIncomingNeighbors(std::string name);
+//private:
+	//void AddNeighborTimeoutEvent(uint32_t id);
 
 	//when the time expire, the incoming neighbor id will be removed automatically
-	void CleanExpiredIncomingNeighbors(uint32_t id);
+	//void CleanExpiredIncomingNeighbors(uint32_t id);
+	std::string getEntryName()
+	{
+		return m_interest_name;
+	}
 private:
-	std::unordered_map< uint32_t,EventId> m_nbTimeoutEvent;///< @brief it is a hashmap that record the timeout event of each neighbor id
-	std::unordered_set< uint32_t > 		  m_incomingnbs;///< @brief container for incoming neighbors
+	//std::unordered_map< uint32_t,EventId> m_nbTimeoutEvent;///< @brief it is a hashmap that record the timeout event of each neighbor id
+
+	//explanation by DJ on Jan 4,2016:m_incomingnbs means last hop
+	//std::unordered_set< uint32_t > 		  m_incomingnbs;///< @brief container for incoming neighbors
+
+	//add by DJ on Jan 4,2016:m_incomingnbs means last hop and its interest packet
+	std::unordered_set< std::string > m_incomingnbs;
+
 	std::string m_interest_name;	
-	Time m_infaceTimeout;
+	//Time m_infaceTimeout;
 
 };
 
