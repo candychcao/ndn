@@ -120,7 +120,7 @@ private:
   //accuracyRate: among all the nodes received, how many are interested
   double accuracyRate;
   double arrivalRate;
-  double averageForwardTimes;
+  uint32_t ForwardTimes;
   double averageInterestForwardTimes;
   double averageDataForwardTimes;
   double averageDelay;
@@ -194,7 +194,7 @@ nrndnExample::nrndnExample () :
   hitRate(0),
   accuracyRate(0),
   arrivalRate(0),
-  averageForwardTimes(0),
+  ForwardTimes(0),
   averageInterestForwardTimes(0),
   averageDataForwardTimes(0),
   averageDelay(0),
@@ -372,7 +372,7 @@ nrndnExample::Report ()
 			//<<accuracyRate<<'\t'
 			<<hitRate<<'\t'
 			<<averageDelay<<'\t'
-			<<averageForwardTimes<<'\t'
+			<<ForwardTimes<<'\t'
 			<<averageInterestForwardTimes<<'\t'
 			<<averageDataForwardTimes<<'\t'
 			//<<SumForwardTimes<<'\t'
@@ -774,10 +774,10 @@ void
 nrndnExample::getStatistic()
 {
 	//1. get average arrival rate
-	arrivalRate = nrUtils::GetAverageArrivalRate();
+	//arrivalRate = nrUtils::GetAverageArrivalRate();
 
 	//2. get average accurate rate
-	accuracyRate=nrUtils::GetAverageAccurateRate();
+	//accuracyRate=nrUtils::GetAverageAccurateRate();
 
 	//3. get average hit rate
 	hitRate = nrUtils::GetAverageHitRate();
@@ -786,15 +786,12 @@ nrndnExample::getStatistic()
 	averageDelay = nrUtils::GetAverageDelay();
 
 	//5. get average data forward times
-	pair<uint32_t,double> AverageForwardPair = nrUtils::GetAverageForwardTimes();
-	averageForwardTimes = AverageForwardPair.second;
+	ForwardTimes = nrUtils::GetForwardTimes();
 
 	//6. get average interest forward times
-	pair<uint32_t,double> AverageInterestForwardPair = nrUtils::GetAverageInterestForwardTimes();
-	averageInterestForwardTimes = AverageInterestForwardPair.second;
+	averageInterestForwardTimes = nrUtils::GetAverageInterestForwardTimes();
 
-	pair<uint32_t,double> AverageDataForwardPair = nrUtils::GetAverageDataForwardTimes();
-	averageDataForwardTimes = AverageDataForwardPair.second;
+	averageDataForwardTimes = nrUtils::GetAverageInterestForwardTimes();
 
 	//SumForwardTimes = AverageDataForwardPair.first + AverageInterestForwardPair.first;
 }

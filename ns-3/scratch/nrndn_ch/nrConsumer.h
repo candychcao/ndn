@@ -109,6 +109,7 @@ private:
 	  uint32_t m_virtualPayloadSize;
 	  Name m_prefix;
 	  std::vector<uint32_t> interestSent;
+	  std::map<uint32_t, double> msgTime;
 
 	  //Ptr<ndn::pit::nrndn::NrPitImpl> m_pit;
 	  //Ptr<ndn::fib::nrndn::NrFibImpl> m_fib;

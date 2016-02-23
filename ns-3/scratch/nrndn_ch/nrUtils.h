@@ -71,17 +71,19 @@ public:
 	static std::pair<uint32_t, uint32_t> GetNodeSizeAndInterestNodeSize(uint32_t id,uint32_t signature, const std::string& lane);
 	static void SetNodeSize(uint32_t id, uint32_t signature,uint32_t nodesize);
 	static void SetInterestedNodeSize(uint32_t id,uint32_t signature,uint32_t InterestedNodeSize);
-	static void IncreaseNodeCounter(uint32_t id,uint32_t signature);
-	static void IncreaseInterestedNodeCounter(uint32_t id,uint32_t signature);
+	static void IncreaseNodeCounter();
+	static void IncreaseInterestedNodeCounter();
 	static void IncreaseDisinterestedNodeCounter(uint32_t id,uint32_t signature);
+	static void IncreaseInterestSum();
+	static void IncreaseDataSum();
 
 	//2. forward times
 	static ForwardCounterMap forwardCounter;
-	static void IncreaseForwardCounter(uint32_t id,uint32_t signature);
+	static void IncreaseForwardCounter();
 	static ForwardCounterMap interestForwardCounter;
-	static void IncreaseInterestForwardCounter(uint32_t id,uint32_t nonce);
+	static void IncreaseInterestForwardCounter();
 	static ForwardCounterMap dataForwardCounter;
-	static void IncreaseDataForwardCounter(uint32_t id,uint32_t signature);
+	static void IncreaseDataForwardCounter();
 
 	//3. Delay Record
 	static TransmissionDelayMap TransmissionDelayRecord;  //\brief TransmissionDelayRecord[nodeid][signature]=Delay time;
@@ -96,21 +98,23 @@ public:
 	 * @brief get the average forward times
 	 * \return (ForwardTimesSum,averageForwardTimes)
 	 * */
-	static std::pair<uint32_t,double> GetAverageForwardTimes();
+	static uint32_t GetForwardTimes();
 
 	/*
 	 * @brief get the average interest packet forward times
 	 * \return (InterestForwardTimesSum,averageInterestForwardTimes)
 	 * */
-	static std::pair<uint32_t,double> GetAverageInterestForwardTimes();
+	static double GetAverageInterestForwardTimes();
 
 	/*
 	 * @brief get the average interest packet forward times
 	 * \return (DataForwardTimesSum,averageDataForwardTimes)
 	 * */
-	static std::pair<uint32_t,double> GetAverageDataForwardTimes();
+	static double GetAverageDataForwardTimes();
 
 	static double GetAverageDelay();
+
+	static void updateDelay(double d);
 
 	//4 . appIndex
 	static AppIndexType appIndex;
@@ -121,6 +125,17 @@ public:
 	static uint32_t HelloByteSent;
 	static void AggrateDataPacketSize(Ptr<const Data> data);
 	static void AggrateInterestPacketSize(Ptr<const Interest> interest);
+
+
+	static uint32_t interestedNodeSum;
+	static uint32_t interestedNodeReceivedSum;
+
+	static uint32_t interestNum;
+	static uint32_t dataNum;
+	static uint32_t interestForwardSum;
+	static uint32_t dataForwardSum;
+	static uint32_t forwardSum;
+	static double delay;
 };
 
 } /* namespace nrndn */

@@ -113,7 +113,7 @@ void nrConsumer::SendPacket()
 	  interest->SetName(interestName);
 	  interest->SetNonce(m_rand.GetValue());//just generate a random number
 	  interest->SetInterestLifetime    (m_interestLifeTime);
-	  interestSent.push_back(interest->GetNonce());
+
 
 	  	 //add header;
 	  	 ndn::nrndn::nrndnHeader nrheader;
@@ -133,7 +133,11 @@ void nrConsumer::SendPacket()
 	    m_transmittedInterests (interest, this, m_face);
 	    m_face->ReceiveInterest (interest);
 
-	    nrUtils::IncreaseNodeCounter(GetNode()->GetId(), interest->GetNonce());
+	    interestSent.push_back(interest->GetNonce());
+	    msgTime[interest->GetNonce()] = Simulator::Now().GetSeconds();
+
+	    nrUtils::IncreaseNodeCounter();
+	    nrUtils::IncreaseInterestSum();
 }
 
 void nrConsumer::OnData(Ptr<const Data> data)
@@ -154,7 +158,9 @@ void nrConsumer::OnData(Ptr<const Data> data)
 		if(interestSent[i] == signature)
 		{
 			interestSent[i] = 0;
-			nrUtils::IncreaseInterestedNodeCounter(GetNode()->GetId(), signature);
+			nrUtils::IncreaseInterestedNodeCounter();
+			double delay = Simulator::Now().GetSeconds() - msgTime[signature];
+			nrUtils::updateDelay(delay);
 			std::cout<<"At time "<<Simulator::Now().GetSeconds()<<":"<<m_node->GetId()<<"\treceived data "<<name.toUri()<<" from "<<nodeId<<"\tSignature "<<signature<<endl;
 		}
 	}

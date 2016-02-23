@@ -674,7 +674,7 @@ void NavigationRouteHeuristic::ForwardResourcePacket(Ptr<Data> src)
 	cout<<"node: "<<m_node->GetId()<<" forward resource packet from "<<nrheader.getSourceId()<<endl;
 	SendDataPacket(data);
 
-	ndn::nrndn::nrUtils::IncreaseForwardCounter(nrheader.getSourceId(), data->GetSignature());
+	ndn::nrndn::nrUtils::IncreaseForwardCounter();
 }
 
 void NavigationRouteHeuristic::ForwardConfirmPacket(Ptr<Data> src)
@@ -727,7 +727,7 @@ void NavigationRouteHeuristic::ForwardConfirmPacket(Ptr<Data> src)
 	cout<<"node: "<<m_node->GetId()<<" forward confirm packet from "<<nrheader.getSourceId()<<endl;
 	SendDataPacket(data);
 
-	ndn::nrndn::nrUtils::IncreaseForwardCounter(nrheader.getSourceId(), data->GetSignature());
+	ndn::nrndn::nrUtils::IncreaseForwardCounter();
 }
 
 void NavigationRouteHeuristic::ForwardDataPacket(Ptr<Data> src)
@@ -777,8 +777,8 @@ void NavigationRouteHeuristic::ForwardDataPacket(Ptr<Data> src)
 
 		SendDataPacket(data);
 
-		ndn::nrndn::nrUtils::IncreaseForwardCounter(nrheader.getSourceId(), data->GetSignature());
-		ndn::nrndn::nrUtils::IncreaseDataForwardCounter(nrheader.getSourceId(), data->GetSignature());
+		ndn::nrndn::nrUtils::IncreaseForwardCounter();
+		ndn::nrndn::nrUtils::IncreaseDataForwardCounter();
 }
 
 void NavigationRouteHeuristic::ForwardDetectPacket(Ptr<Interest> src)
@@ -821,7 +821,7 @@ void NavigationRouteHeuristic::ForwardDetectPacket(Ptr<Interest> src)
 	m_interestNonceSeen.Put(src->GetNonce(),true);
 	cout<<"node: "<<m_node->GetId()<<" forward detect packet from "<<nrheader.getSourceId()<<endl;
 	SendInterestPacket(interest);
-	ndn::nrndn::nrUtils::IncreaseForwardCounter(nrheader.getSourceId(), interest->GetNonce());
+	ndn::nrndn::nrUtils::IncreaseForwardCounter();
 }
 
 void NavigationRouteHeuristic::ForwardInterestPacket(Ptr<Interest> src)
@@ -859,8 +859,8 @@ void NavigationRouteHeuristic::ForwardInterestPacket(Ptr<Interest> src)
 	cout<<"node: "<<m_node->GetId()<<" forward interest packet from "<<nrheader.getSourceId()<<endl;
 	SendInterestPacket(interest);
 
-	ndn::nrndn::nrUtils::IncreaseForwardCounter(nrheader.getSourceId(), interest->GetNonce());
-	ndn::nrndn::nrUtils::IncreaseInterestForwardCounter(nrheader.getSourceId(), interest->GetNonce());
+	ndn::nrndn::nrUtils::IncreaseForwardCounter();
+	ndn::nrndn::nrUtils::IncreaseInterestForwardCounter();
 }
 
 void NavigationRouteHeuristic::ReplyConfirmPacket(Ptr<Interest> interest)
@@ -951,6 +951,7 @@ void NavigationRouteHeuristic::ReplyDataPacket(Ptr<Interest> interest)
 
 	m_dataSignatureSeen.Put(data->GetSignature(),true);
 	cout<<"node: "<<m_node->GetId()<<" reply data packet to "<<nrheader.getSourceId()<<endl;
+	ndn::nrndn::nrUtils::IncreaseDataSum();
 	SendDataPacket(data);
 }
 
