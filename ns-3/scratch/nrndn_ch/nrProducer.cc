@@ -92,9 +92,7 @@ void nrProducer::StartApplication()
 
 	App::StartApplication();
 	NS_LOG_INFO("NodeID: " << GetNode ()->GetId ());
-	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!实现CS后做修改！！！！！！！！！！！！！！！！！！！！！！！！！！！！！1
-		add resource into CS
-	*/
+
 	Simulator::Schedule (Seconds (10.0), &nrProducer::sendResourcePacket, this);
 	std::cout<<"siu:"<<"Start producer Application: " << GetNode ()->GetId ()<<endl;
 }
@@ -128,7 +126,7 @@ void nrProducer::sendResourcePacket()
 	std::cout<<"siu:"<<GetNode()->GetId()<<"sendResourcePacket:"<<m_prefix.toUri()<<std::endl;
 	Ptr<Data> data = Create<Data>(Create<Packet>(m_virtualPayloadSize));
 	Ptr<Name> dataName = Create<Name>(m_prefix);
-	dataName->append(m_postfix);
+	//dataName->append(m_postfix);
 
 	data->SetName(dataName);
 	data->SetFreshness(m_freshness);

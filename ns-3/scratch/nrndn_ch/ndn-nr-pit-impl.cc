@@ -74,8 +74,8 @@ NrPitImpl::NotifyNewAggregate ()
 		// Setup Lane change action
 		if (m_sensor != NULL)
 		{
-			m_sensor->TraceConnectWithoutContext("LaneChange",
-					MakeCallback(&NrPitImpl::laneChange, this));
+			//m_sensor->TraceConnectWithoutContext("LaneChange",
+				//	MakeCallback(&NrPitImpl::laneChange, this));
 
 			//NrPitEntry needs m_sensor. Initialize immediately after m_sensor is aggregated
 			InitializeNrPitEntry();
@@ -115,7 +115,7 @@ bool NrPitImpl::UpdatePit(const std::vector<std::string>& route,const uint32_t& 
 }*/
 
 //add by DJ on Jan 4,2016:update pit
-bool NrPitImpl::UpdatePit(std::string lane,Ptr<const Interest> interest)
+bool NrPitImpl::UpdatePit(std::string lane,Ptr<Interest> interest)
 {
 	//std::ostringstream os;
 	std::vector<Ptr<Entry> >::iterator pit=m_pitContainer.begin();
@@ -136,14 +136,21 @@ bool NrPitImpl::UpdatePit(std::string lane,Ptr<const Interest> interest)
 		//const name::Component &pitName=(*pit)->GetInterest()->GetName().get(0);
 		if(pitEntry->getEntryName() == interest->GetName().toUri())
 		{
-			std::unordered_set< std::string >::iterator it = pitEntry->getIncomingnbs().find(lane);
-			if(it==pitEntry->getIncomingnbs().end())
+			std::unordered_set< std::string >::const_iterator it = pitEntry->getIncomingnbs().find(lane);
+			if(it==pitEntry->getIncomingnbs().end()){
 				pitEntry->AddIncomingNeighbors(lane);
+				return true;
+			}
 			//os<<(*pit)->GetInterest()->GetName().toUri()<<" add Neighbor "<<id<<' ';
 		}
-
+        pitEntry->Print(std::cout);
 
 	}
+	    Ptr<fib::Entry> fibEntry=ns3::Create<fib::Entry>(Ptr<Fib>(0),Ptr<Name>(0));
+	    Ptr<EntryNrImpl> fentry = ns3::Create<EntryNrImpl>(*this,interest,fibEntry);
+		Ptr<Entry> pitEntry = DynamicCast<Entry>(fentry);
+		m_pitContainer.push_back(pitEntry);
+
 	//NS_LOG_UNCOND("update pit:"<<os.str());
 	//NS_LOG_DEBUG("update pit:"<<os.str());
 	return true;
@@ -195,7 +202,7 @@ NrPitImpl::Find (const Name &prefix)
 	//NS_ASSERT_MSG(false,"In NrPitImpl,NrPitImpl::Find (const Name &prefix) should not be invoked");
 	 NS_LOG_INFO ("Finding prefix"<<prefix.toUri());
 	 std::vector<Ptr<Entry> >::iterator it;
-	 NS_ASSERT_MSG(m_pitContainer.size()!=0,"Empty pit container. No initialization?");
+	 //NS_ASSERT_MSG(m_pitContainer.size()!=0,"Empty pit container. No initialization?");
 	 for(it=m_pitContainer.begin();it!=m_pitContainer.end();++it)
 	 {
 		 if((*it)->GetPrefix()==prefix)
@@ -216,7 +223,8 @@ NrPitImpl::Create (Ptr<const Interest> header)
 	return 0;
 }
 
-//need to modify:how to initialize?
+// need to modify:how to initialize?
+//test pit
 bool
 NrPitImpl::InitializeNrPitEntry()
 {
@@ -233,7 +241,8 @@ NrPitImpl::InitializeNrPitEntry()
 		//Create a fake FIB entry(if not ,L3Protocol::RemoveFace will have problem when using pitEntry->GetFibEntry)
 		Ptr<fib::Entry> fibEntry=ns3::Create<fib::Entry>(Ptr<Fib>(0),Ptr<Name>(0));
 
-		Ptr<Entry> entry = ns3::Create<EntryNrImpl>(*this,interest,fibEntry,m_cleanInterval) ;
+		Ptr<Entry> entry = ns3::Create<EntryNrImpl>(*this,interest,fibEntry) ;
+
 		m_pitContainer.push_back(entry);
 		NS_LOG_DEBUG("Initialize pit:Push_back"<<name->toUri());
 	}
@@ -329,7 +338,7 @@ std::string NrPitImpl::uriConvertToString(std::string str)
 
 
 //laneChange means sending packet back to neighbors in last hop whether forward its data packets or not?
-void NrPitImpl::laneChange(std::string oldLane, std::string newLane)
+/*void NrPitImpl::laneChange(std::string oldLane, std::string newLane)
 {
 	if (oldLane.empty()
 			|| (ndn::nrndn::NodeSensor::emptyLane == oldLane
@@ -404,7 +413,7 @@ void NrPitImpl::laneChange(std::string oldLane, std::string newLane)
 		return;
 	}
 
-}
+}*/
 
 void NrPitImpl::DoInitialize(void)
 {

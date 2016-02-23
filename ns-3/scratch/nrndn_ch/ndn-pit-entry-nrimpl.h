@@ -11,6 +11,7 @@
 
 #include "ns3/ndn-pit-entry.h"
 #include "ns3/ndn-pit-entry-incoming-face.h"
+#include "ns3/ndn-name.h"
 
 #include <string>
 #include <unordered_map>
@@ -69,6 +70,8 @@ public:
 	{
 		return m_interest_name;
 	}
+
+	void Print(std::ostream &os) const;
 private:
 	//std::unordered_map< uint32_t,EventId> m_nbTimeoutEvent;///< @brief it is a hashmap that record the timeout event of each neighbor id
 

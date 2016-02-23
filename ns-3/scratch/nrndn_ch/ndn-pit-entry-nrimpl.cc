@@ -104,6 +104,15 @@ void EntryNrImpl::RemoveIncomingNeighbors(std::string name){
 
 }
 
+void EntryNrImpl::Print(std::ostream& os) const
+{
+	os<<"nrndnEntryNrImpl content: "
+			<<" interest name="<<m_interest_name;
+	for(std::unordered_set< std::string >::const_iterator it = m_incomingnbs.begin(); it != m_incomingnbs.end(); ++it)
+		os<<(*it)<<" ";
+	os<<std::endl;
+}
+
 /*
 void EntryNrImpl::RemoveAllTimeoutEvent()
 {

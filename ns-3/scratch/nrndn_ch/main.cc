@@ -122,6 +122,7 @@ private:
   double arrivalRate;
   double averageForwardTimes;
   double averageInterestForwardTimes;
+  double averageDataForwardTimes;
   double averageDelay;
   uint32_t SumForwardTimes;
 
@@ -195,6 +196,7 @@ nrndnExample::nrndnExample () :
   arrivalRate(0),
   averageForwardTimes(0),
   averageInterestForwardTimes(0),
+  averageDataForwardTimes(0),
   averageDelay(0),
   SumForwardTimes(0),
   noFwStop(false),
@@ -290,8 +292,8 @@ nrndnExample::RunNrndnSim ()
 	std::cout<<"安装Nrndn应用程序"<<std::endl;
 	InstallNrndnApplications();
 	//InstallTestApplications();
-	std::cout<<"安装交通状况"<<std::endl;
-	InstallTraffics();
+	//std::cout<<"安装交通状况"<<std::endl;
+	//InstallTraffics();
 
 
 	Simulator::Schedule(Seconds(0.0), &nrndnExample::Look_at_clock, this);
@@ -366,17 +368,19 @@ nrndnExample::Report ()
 	getStatistic();
 
 	//2. output the result
-	os<<arrivalRate <<'\t'
-			<<accuracyRate<<'\t'
+	os//<<arrivalRate <<'\t'
+			//<<accuracyRate<<'\t'
 			<<hitRate<<'\t'
 			<<averageDelay<<'\t'
 			<<averageForwardTimes<<'\t'
 			<<averageInterestForwardTimes<<'\t'
-			<<SumForwardTimes<<'\t'
-			<<nrUtils::InterestByteSent<<'\t'
-			<<nrUtils::HelloByteSent<<'\t'
-			<<nrUtils::DataByteSent<<'\t'
-			<<nrUtils::ByteSent<<endl;
+			<<averageDataForwardTimes<<'\t'
+			//<<SumForwardTimes<<'\t'
+			//<<nrUtils::InterestByteSent<<'\t'
+			//<<nrUtils::HelloByteSent<<'\t'
+			//<<nrUtils::DataByteSent<<'\t'
+			//<<nrUtils::ByteSent
+			<<endl;
 }
 
 void
@@ -782,14 +786,17 @@ nrndnExample::getStatistic()
 	averageDelay = nrUtils::GetAverageDelay();
 
 	//5. get average data forward times
-	pair<uint32_t,double> AverageDataForwardPair = nrUtils::GetAverageForwardTimes();
-	averageForwardTimes = AverageDataForwardPair.second;
+	pair<uint32_t,double> AverageForwardPair = nrUtils::GetAverageForwardTimes();
+	averageForwardTimes = AverageForwardPair.second;
 
 	//6. get average interest forward times
 	pair<uint32_t,double> AverageInterestForwardPair = nrUtils::GetAverageInterestForwardTimes();
 	averageInterestForwardTimes = AverageInterestForwardPair.second;
 
-	SumForwardTimes = AverageDataForwardPair.first + AverageInterestForwardPair.first;
+	pair<uint32_t,double> AverageDataForwardPair = nrUtils::GetAverageDataForwardTimes();
+	averageDataForwardTimes = AverageDataForwardPair.second;
+
+	//SumForwardTimes = AverageDataForwardPair.first + AverageInterestForwardPair.first;
 }
 
 

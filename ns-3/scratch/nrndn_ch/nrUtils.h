@@ -71,6 +71,7 @@ public:
 	static std::pair<uint32_t, uint32_t> GetNodeSizeAndInterestNodeSize(uint32_t id,uint32_t signature, const std::string& lane);
 	static void SetNodeSize(uint32_t id, uint32_t signature,uint32_t nodesize);
 	static void SetInterestedNodeSize(uint32_t id,uint32_t signature,uint32_t InterestedNodeSize);
+	static void IncreaseNodeCounter(uint32_t id,uint32_t signature);
 	static void IncreaseInterestedNodeCounter(uint32_t id,uint32_t signature);
 	static void IncreaseDisinterestedNodeCounter(uint32_t id,uint32_t signature);
 
@@ -79,6 +80,8 @@ public:
 	static void IncreaseForwardCounter(uint32_t id,uint32_t signature);
 	static ForwardCounterMap interestForwardCounter;
 	static void IncreaseInterestForwardCounter(uint32_t id,uint32_t nonce);
+	static ForwardCounterMap dataForwardCounter;
+	static void IncreaseDataForwardCounter(uint32_t id,uint32_t signature);
 
 	//3. Delay Record
 	static TransmissionDelayMap TransmissionDelayRecord;  //\brief TransmissionDelayRecord[nodeid][signature]=Delay time;
@@ -100,6 +103,12 @@ public:
 	 * \return (InterestForwardTimesSum,averageInterestForwardTimes)
 	 * */
 	static std::pair<uint32_t,double> GetAverageInterestForwardTimes();
+
+	/*
+	 * @brief get the average interest packet forward times
+	 * \return (DataForwardTimesSum,averageDataForwardTimes)
+	 * */
+	static std::pair<uint32_t,double> GetAverageDataForwardTimes();
 
 	static double GetAverageDelay();
 

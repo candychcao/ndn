@@ -19,6 +19,8 @@
 #include "LRUCache.h"
 #include "NodeSensor.h"
 #include "ndn-nr-pit-impl.h"
+#include "ndn-nr-fib-impl.h"
+#include "ndn-nr-cs-impl.h"
 #include "nrndn-Neighbors.h"
 
 #include <vector>
@@ -145,6 +147,13 @@ private:
 
 	void ReplyTablePacket(Ptr<Interest> interest);
 
+	void ReplyDataPacket(Ptr<Interest> interest);
+
+
+	void PrepareInterestPacket(Ptr<Interest> interest);
+
+	void PrepareDetectPacket(Ptr<Interest> interest);
+
 
 	void SendInterestPacket(Ptr<Interest> interest);
 
@@ -178,7 +187,9 @@ private:
 
 	Ptr<ndn::nrndn::NodeSensor> m_sensor;
 
-	Ptr<pit::nrndn::NrPitImpl> m_nrpit; ///< \brief Reference to PIT to which this forwarding strategy is associated
+	Ptr<ndn::pit::nrndn::NrPitImpl> m_pit;
+	Ptr<ndn::fib::nrndn::NrFibImpl> m_fib;
+	Ptr<ndn::cs::nrndn::NrCsImpl> m_cs;
 
 	uint32_t				m_CacheSize;
 
