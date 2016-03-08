@@ -17,6 +17,7 @@ NS_LOG_COMPONENT_DEFINE ("ndn.fib.NrFibImpl");
 #include "ns3/string.h"
 #include "ns3/uinteger.h"
 #include "ns3/simulator.h"
+#include "ns3/name.h"
 
 namespace ns3
 {
@@ -37,17 +38,17 @@ NrFibImpl::GetTypeId ()
     .SetGroupName ("Ndn")
     .SetParent<Fib> ()
     .AddConstructor< NrFibImpl > ()
-    .AddAttribute ("CleanInterval", "cleaning interval of the timeout incoming faces of FIB entry",
+   /* .AddAttribute ("CleanInterval", "cleaning interval of the timeout incoming faces of FIB entry",
    			                    TimeValue (Seconds (10)),
    			                    MakeTimeAccessor (&NrFibImpl::m_cleanInterval),
-   			                    MakeTimeChecker ())
+   			                    MakeTimeChecker ())*/
     ;
 
   return tid;
 }
 
 NrFibImpl::NrFibImpl ():
-		m_cleanInterval(Seconds(10.0))
+		m_cleanInterval(Seconds(300.0))
 {
 }
 
@@ -112,36 +113,65 @@ NrFibImpl::RemoveFromAll (Ptr<Face> face){
 }
 
 void
-NrFibImpl::AddFibEntry (const Ptr<const Name> &prefix, std::string lane,uint32_t ttl){
-	if(m_fibContainer.empty()){
+NrFibImpl::AddFibEntry (const Ptr<const Name> &prefix, std::string lane,uint32_t ttl)
+{
+	std::cout<<"add FIB Entry name:"<<prefix->toUri()<<" lane:"<<lane<<" TTL:"<<ttl<<std::endl;
+	if(m_fibContainer.empty())
+	{
 		Ptr<EntryNrImpl> entry = ns3::Create<EntryNrImpl>(this,prefix,m_cleanInterval);
 		Ptr<Entry> fibEntry = DynamicCast<Entry>(entry);
 		m_fibContainer.push_back(fibEntry);
+		this->Print(std::cout);
+		return;
 	}
-	else{
-	std::vector<Ptr<Entry> >::iterator fib=m_fibContainer.begin();
-	for(;fib!=m_fibContainer.end();++fib)
+	else
+	{
+		std::vector<Ptr<Entry> >::iterator fib=m_fibContainer.begin();
+		for(;fib!=m_fibContainer.end();++fib)
 		{
 			Ptr<EntryNrImpl> fibEntry = DynamicCast<EntryNrImpl>(*fib);
-			//const name::Component &fibName=(*fib)->GetInterest()->GetName().get(0);
-            //when find source name
 			if(fibEntry->getEntryName() == prefix->toUri())
 			{
-
 				fibEntry->AddIncomingNeighbors(lane,ttl);
+				this->Print(std::cout);
                 return;
 			}
-
 		}
-
-	//if not,insert it to the container;
-
-	//error:no matching function for call to
 	Ptr<EntryNrImpl> entry = ns3::Create<EntryNrImpl>(this,prefix,m_cleanInterval);
 	Ptr<Entry> fibEntry = DynamicCast<Entry>(entry);
 	m_fibContainer.push_back(fibEntry);
+	this->Print(std::cout);
 	}
     return;
+}
+
+void
+NrFibImpl::Print (std::ostream& os) const
+{
+	os<<"FIB content ";
+	std::vector<Ptr<Entry> >::const_iterator it;
+	//NS_ASSERT_MSG(m_fibContainer.size()!=0,"Empty fib container. No initialization?");
+	for(it=m_fibContainer.begin();it!=m_fibContainer.end();++it)
+	{
+		os<<"name:  "<<(*it)->GetPrefix().toUri()<<"    ";
+	}
+	os<<std::endl;
+}
+
+//modify by DJ Dec 25,2015. Fib update according to source packet.
+Ptr<Entry>
+NrFibImpl::Find (const Name &prefix)
+{
+	//NS_ASSERT_MSG(false,"In NrFibImpl,NrFibImpl::Find (const Name &prefix) should not be invoked");
+	 NS_LOG_INFO ("Finding prefix"<<prefix.toUri());
+	 std::vector<Ptr<Entry> >::iterator it;
+	 //NS_ASSERT_MSG(m_fibContainer.size()!=0,"Empty fib container. No initialization?");
+	 for(it=m_fibContainer.begin();it!=m_fibContainer.end();++it)
+	 {
+		 if((*it)->GetPrefix()==prefix)
+			 return *it;
+	 }
+	return 0;
 }
 
 void
@@ -193,25 +223,6 @@ NrFibImpl::DoDispose ()
   
 	Fib::DoDispose ();
  }
-  
-
-
-//modify by DJ Dec 25,2015. Fib update according to source packet.
-Ptr<Entry>
-NrFibImpl::Find (const Name &prefix)
-{
-	//NS_ASSERT_MSG(false,"In NrFibImpl,NrFibImpl::Find (const Name &prefix) should not be invoked");
-	 NS_LOG_INFO ("Finding prefix"<<prefix.toUri());
-	 std::vector<Ptr<Entry> >::iterator it;
-	 //NS_ASSERT_MSG(m_fibContainer.size()!=0,"Empty fib container. No initialization?");
-	 for(it=m_fibContainer.begin();it!=m_fibContainer.end();++it)
-	 {
-		 if((*it)->GetPrefix()==prefix)
-			 return *it;
-	 }
-	return 0;
-}
-  
 
 
 //modify by DJ Dec 25,2015. Fib update according to source packet.
@@ -254,12 +265,7 @@ NrFibImpl::InitializeNrFibEntry()
 	return true;
 }*/
   
-  
-void
-NrFibImpl::Print (std::ostream& os) const
-{
 
-}
 
 uint32_t
 NrFibImpl::GetSize () const

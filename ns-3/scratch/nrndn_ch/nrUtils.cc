@@ -19,16 +19,18 @@ namespace nrndn
 
 using namespace std;
 
-nrUtils::MessageArrivalMap nrUtils::msgArrivalCounter;
-nrUtils::ForwardCounterMap nrUtils::forwardCounter;
-nrUtils::ForwardCounterMap nrUtils::interestForwardCounter;
-nrUtils::TransmissionDelayMap nrUtils::TransmissionDelayRecord;
 nrUtils::AppIndexType nrUtils::appIndex;
-uint32_t nrUtils::ByteSent=0;
-uint32_t nrUtils::DataByteSent=0;
-uint32_t nrUtils::InterestByteSent=0;
-uint32_t nrUtils::HelloByteSent=0;
 
+uint32_t nrUtils::interestedNodeSum = 0;
+uint32_t nrUtils::interestedNodeReceivedSum = 0;
+
+uint32_t nrUtils::interestNum = 0;
+uint32_t nrUtils::dataNum = 0;
+uint32_t nrUtils::interestForwardSum = 0;
+uint32_t nrUtils::dataForwardSum = 0;
+uint32_t nrUtils::forwardSum = 0;
+uint32_t nrUtils::detectTimes = 0;
+double nrUtils::delay = 0;
 
 nrUtils::nrUtils()
 {
@@ -41,255 +43,83 @@ nrUtils::~nrUtils()
 	// TODO Auto-generated destructor stub
 }
 
-std::pair<uint32_t, uint32_t> nrUtils::GetNodeSizeAndInterestNodeSize(
-		uint32_t id, uint32_t signature, const std::string& lane)
+void nrUtils::IncreaseNodeCounter()
 {
-	uint32_t nodeSize = 0;
-	uint32_t interestSize=0;
-	NodeContainer c =NodeContainer::GetGlobal();
-	NodeContainer::Iterator it;
-	for(it=c.Begin();it!=c.End();++it)
-	{
-		Ptr<Application> app=(*it)->GetApplication(appIndex["ns3::ndn::nrndn::nrProducer"]);
-		Ptr<nrndn::nrProducer> producer = DynamicCast<nrndn::nrProducer>(app);
-		NS_ASSERT(producer);
-		if(producer->IsActive())
-			++nodeSize;
-		if(producer->IsInterestLane(lane))
-			++interestSize;
-	}
-	return std::pair<uint32_t, uint32_t>(nodeSize,interestSize);
-}
-void nrUtils::SetNodeSize(uint32_t id, uint32_t signature,uint32_t nodesize)
-{
-	msgArrivalCounter[id][signature].NodeSize=nodesize;
+	interestedNodeSum++;
 }
 
-void nrUtils::SetInterestedNodeSize(uint32_t id,
-		uint32_t signature, uint32_t InterestedNodeSize)
+void nrUtils::IncreaseDetectTimes()
 {
-	msgArrivalCounter[id][signature].InterestedNodeSize=InterestedNodeSize;
+	detectTimes++;
 }
 
-void nrUtils::IncreaseInterestedNodeCounter(uint32_t id,
-		uint32_t signature)
+void nrUtils::IncreaseInterestedNodeCounter()
 {
-	msgArrivalCounter[id][signature].InterestedNodeReceiveCounter++;
+	interestedNodeReceivedSum ++;
 }
 
-void nrUtils::IncreaseDisinterestedNodeCounter(uint32_t id,
-		uint32_t signature)
+void nrUtils::IncreaseForwardCounter()
 {
-	msgArrivalCounter[id][signature].DisinterestedNodeReceiveCounter++;
+	forwardSum++;
 }
 
-void nrUtils::IncreaseForwardCounter(uint32_t id,
-		uint32_t signature)
+void nrUtils::IncreaseInterestForwardCounter()
 {
-	forwardCounter[id][signature]++;
+	interestForwardSum++;
 }
 
-void nrUtils::IncreaseInterestForwardCounter(uint32_t id, uint32_t nonce)
+void nrUtils::IncreaseDataForwardCounter()
 {
-	interestForwardCounter[id][nonce]++;
+	dataForwardSum++;
 }
 
-void nrUtils::InsertTransmissionDelayItem(uint32_t id,
-		uint32_t signature, double delay)
+void nrUtils::IncreaseInterestSum()
 {
-	TransmissionDelayRecord[id][signature].push_back(delay);
+	interestNum++;
 }
 
-
-
-double nrUtils::GetAverageArrivalRate()
+void nrUtils:: IncreaseDataSum()
 {
-	MessageArrivalMap::iterator it1;
-	std::unordered_map<uint32_t,MsgAttribute>::iterator it2;
-	vector<double>::iterator rit;
-	vector<double> result;
-
-	for (it1 = msgArrivalCounter.begin(); it1 != msgArrivalCounter.end(); ++it1)
-	{
-		for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-		{
-
-			const MsgAttribute& msgAttr = it2->second;
-			double size = msgAttr.NodeSize;
-			double receiveNodesNum = msgAttr.InterestedNodeReceiveCounter + msgAttr.DisinterestedNodeReceiveCounter;
-			if(size != 0)
-			{
-				double arrivalRate = receiveNodesNum / size ;
-				result.push_back(arrivalRate);
-			}
-
-		}
-	}
-
-	return GetAverage(result);
+	dataNum++;
 }
 
-double nrUtils::GetAverageAccurateRate()
+uint32_t nrUtils::GetForwardTimes()
 {
-	MessageArrivalMap::iterator it1;
-	std::unordered_map<uint32_t,MsgAttribute>::iterator it2;
-	vector<double> result;
+	return forwardSum;
+}
 
-	for (it1 = msgArrivalCounter.begin(); it1 != msgArrivalCounter.end(); ++it1)
-	{
-		for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-		{
-			const MsgAttribute& msgAttr = it2->second;
-			double interestedNodeNum = msgAttr.InterestedNodeReceiveCounter;
-			double receiveNodesNum = msgAttr.InterestedNodeReceiveCounter + msgAttr.DisinterestedNodeReceiveCounter;
-			if(receiveNodesNum != 0)
-			{
-				double accurateRate = interestedNodeNum / receiveNodesNum ;
-				result.push_back(accurateRate);
-			}
+double nrUtils::GetAverageInterestForwardTimes()
+{
+	return interestForwardSum/interestNum;
+}
 
-		//	cout<<"From msgArrivalCounter, ID="<<it1->first<<" Signature="<<it2->first<<
-		//			" interest node="<< msgAttr.InterestedNodeReceiveCounter<<
-		//            " disinterest node="<<msgAttr.DisinterestedNodeReceiveCounter<<endl;
+double nrUtils::GetAverageDataForwardTimes()
+{
+	return dataForwardSum/dataNum;
+}
 
-		}
-	}
+void nrUtils::updateDelay(double d)
+{
+	delay += d;
+}
 
-	return GetAverage(result);
+double nrUtils::GetAverageDelay()
+{
+	return delay/interestedNodeReceivedSum;
 }
 
 double nrUtils::GetAverageHitRate()
 {
-	MessageArrivalMap::iterator it1;
-	std::unordered_map<uint32_t,MsgAttribute>::iterator it2;
-	vector<double> result;
-
-	for (it1 = msgArrivalCounter.begin(); it1 != msgArrivalCounter.end(); ++it1)
-	{
-		for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-		{
-
-			const MsgAttribute& msgAttr = it2->second;
-			double interestedNodeNum = msgAttr.InterestedNodeReceiveCounter;
-			double interestedNodeSum = msgAttr.InterestedNodeSize;
-			if(interestedNodeSum!=0)
-			{
-				double hitRate = interestedNodeNum / interestedNodeSum;
-				result.push_back(hitRate);
-			}
-
-		}
-	}
-
-	return GetAverage(result);
+	return interestedNodeReceivedSum / interestedNodeSum;
 }
 
-pair<uint32_t,double> nrUtils::GetAverageForwardTimes()
+uint32_t nrUtils:: GetInterestNum()
 {
-	ForwardCounterMap::iterator it1;
-	std::unordered_map<uint32_t,uint32_t >::iterator it2;
-	uint32_t forwardTimes=0;
-	double messageNum=0;
-
-	for (it1 = forwardCounter.begin(); it1 != forwardCounter.end(); ++it1)
-	{
-		messageNum += it1->second.size();
-		for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-		{
-			forwardTimes += it2->second;
-		}
-	}
-
-	if(messageNum == 0)
-		return make_pair(forwardTimes,0);
-
-	double average = forwardTimes / messageNum;
-
-	return make_pair(forwardTimes,average);
+	return interestNum;
 }
-
-pair<uint32_t,double> nrUtils::GetAverageInterestForwardTimes()
+uint32_t nrUtils::GetDetectTimes()
 {
-	ForwardCounterMap::iterator it1;
-	std::unordered_map<uint32_t,uint32_t >::iterator it2;
-	uint32_t forwardTimes=0;
-	double messageNum=0;
-
-	for (it1 = interestForwardCounter.begin(); it1 != interestForwardCounter.end(); ++it1)
-	{
-		messageNum += it1->second.size();
-		for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-		{
-			forwardTimes += it2->second;
-		}
-	}
-
-	if(messageNum == 0)
-		return make_pair(forwardTimes,0);
-
-	double average = forwardTimes / messageNum;
-
-	return make_pair(forwardTimes,average);
-}
-
-
-double nrUtils::GetAverageDelay()
-{
-	TransmissionDelayMap::iterator it1;
-	std::unordered_map<uint32_t,std::vector<double> >::iterator it2;
-	vector<double> result;
-
-	for (it1 = TransmissionDelayRecord.begin(); it1 != TransmissionDelayRecord.end(); ++it1)
-	{
-		for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-		{
-			double averageDelayOfOneMsg=GetAverage(it2->second);
-			result.push_back(averageDelayOfOneMsg);
-		}
-	}
-
-	return GetAverage(result);
-}
-
-double nrUtils::GetAverageTransmissionDelay()
-{
-	TransmissionDelayMap::iterator it1;
-	unordered_map<uint32_t,vector<double> >::iterator it2;
-	vector<double>::iterator it3;
-	double SumSize=0;
-	double SumDelay=0;
-	for(it1=TransmissionDelayRecord.begin();it1!=TransmissionDelayRecord.end();++it1)
-	{
-		for(it2=it1->second.begin();it2!=it1->second.end();++it2)
-		{
-			SumSize+=it2->second.size();
-			for(it3=it2->second.begin();it3!=it2->second.end();++it3)
-				SumDelay+=(*it3);
-		}
-	}
-
-	NS_ASSERT(SumSize != 0);
-
-	return SumDelay/SumSize;
-}
-
-void nrUtils::AggrateDataPacketSize(Ptr<const Data> data)
-{
-	Ptr<Packet> packet = Wire::FromData (data);
-	uint32_t size = packet->GetSize();
-	ByteSent += size;
-	DataByteSent+= size;
-}
-
-void nrUtils::AggrateInterestPacketSize(Ptr<const Interest> interest)
-{
-	Ptr<Packet> packet = Wire::FromInterest (interest);
-	uint32_t size = packet->GetSize();
-	ByteSent += size;
-	if(2==interest->GetScope())//Hello message
-		HelloByteSent += size;
-	else
-		InterestByteSent += size;
+	return detectTimes;
 }
 
 } /* namespace nrndn */

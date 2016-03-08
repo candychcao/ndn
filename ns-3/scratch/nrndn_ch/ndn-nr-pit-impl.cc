@@ -18,6 +18,7 @@ NS_LOG_COMPONENT_DEFINE ("ndn.pit.NrPitImpl");
 #include "ns3/uinteger.h"
 #include "ns3/simulator.h"
 
+
 namespace ns3
 {
 namespace ndn
@@ -37,17 +38,17 @@ NrPitImpl::GetTypeId ()
     .SetGroupName ("Ndn")
     .SetParent<Pit> ()
     .AddConstructor< NrPitImpl > ()
-    .AddAttribute ("CleanInterval", "cleaning interval of the timeout incoming faces of PIT entry",
-   			                    TimeValue (Seconds (10)),
-   			                    MakeTimeAccessor (&NrPitImpl::m_cleanInterval),
-   			                    MakeTimeChecker ())
+   // .AddAttribute ("CleanInterval", "cleaning interval of the timeout incoming faces of PIT entry",
+   	//		                    TimeValue (Seconds (10)),
+   	//		                    MakeTimeAccessor (&NrPitImpl::m_cleanInterval),
+   	//		                    MakeTimeChecker ())
     ;
 
   return tid;
 }
 
 NrPitImpl::NrPitImpl ():
-		m_cleanInterval(Seconds(10.0))
+		m_cleanInterval(Seconds(300.0))
 {
 }
 
@@ -84,59 +85,23 @@ NrPitImpl::NotifyNewAggregate ()
 
   Pit::NotifyNewAggregate ();
 }
-/*
-bool NrPitImpl::UpdatePit(const std::vector<std::string>& route,const uint32_t& id)
-{
-	std::ostringstream os;
-	std::vector<Ptr<Entry> >::iterator pit=m_pitContainer.begin();
-	Ptr<Entry> entry = *pit;
-	Name::const_iterator head=entry->GetInterest()->GetName().begin();
-	//Can name::Component use "=="?
-	std::vector<std::string>::const_iterator it=
-			std::find(route.begin(),route.end(),head->toUri());
-	if(it==route.end())
-		return false;
-	for(;pit!=m_pitContainer.end()&&it!=route.end();++pit,++it)
-	{
-		const name::Component &pitName=(*pit)->GetInterest()->GetName().get(0);
-		if(pitName.toUri() == *it)
-		{
-			Ptr<EntryNrImpl> pitEntry = DynamicCast<EntryNrImpl>(*pit);
-			pitEntry->AddIncomingNeighbors(id);
-			os<<(*pit)->GetInterest()->GetName().toUri()<<" add Neighbor "<<id<<' ';
-		}
-		else
-			break;
-
-	}
-	//NS_LOG_UNCOND("update pit:"<<os.str());
-	NS_LOG_DEBUG("update pit:"<<os.str());
-	return true;
-}*/
 
 //add by DJ on Jan 4,2016:update pit
 bool NrPitImpl::UpdatePit(std::string lane,Ptr<Interest> interest)
 {
-	if(m_pitContainer.empty()){
+	if(m_pitContainer.empty())
+	{
 		Ptr<fib::Entry> fibEntry=ns3::Create<fib::Entry>(Ptr<Fib>(0),Ptr<Name>(0));
 		Ptr<EntryNrImpl> fentry = ns3::Create<EntryNrImpl>(*this,interest,fibEntry);
 		Ptr<Entry> pitEntry = DynamicCast<Entry>(fentry);
 		m_pitContainer.push_back(pitEntry);
-		}
-	else{
+		this->Print(std::cout);
+		return true;;
+	}
+	else
+	{
 	//std::ostringstream os;
-	std::vector<Ptr<Entry> >::iterator pit=m_pitContainer.begin();
-	Ptr<Entry> entry = *pit;
-
-
-	//Can name::Component use "=="?
-	//std::vector<std::string>::const_iterator it=
-	//		std::find(route.begin(),route.end(),head->toUri());
-
-		//return false;
-		//pitEntry->AddIncomingNeighbors(id,interest);
-	//else
-		//pitEntry->RemoveIncomingNeighbors(interest->GetName());
+	std::vector<Ptr<pit::Entry> >::iterator pit=m_pitContainer.begin();
 	for(;pit!=m_pitContainer.end();++pit)
 	{
 		Ptr<EntryNrImpl> pitEntry = DynamicCast<EntryNrImpl>(*pit);
@@ -144,38 +109,40 @@ bool NrPitImpl::UpdatePit(std::string lane,Ptr<Interest> interest)
 		if(pitEntry->getEntryName() == interest->GetName().toUri())
 		{
 			std::unordered_set< std::string >::const_iterator it = pitEntry->getIncomingnbs().find(lane);
-			if(it==pitEntry->getIncomingnbs().end()){
+			if(it==pitEntry->getIncomingnbs().end())
+			{
 				pitEntry->AddIncomingNeighbors(lane);
-				return true;
 			}
-			//os<<(*pit)->GetInterest()->GetName().toUri()<<" add Neighbor "<<id<<' ';
+			this->Print(std::cout);
+			return true;
 		}
-        pitEntry->Print(std::cout);
-
 	}
 	    Ptr<fib::Entry> fibEntry=ns3::Create<fib::Entry>(Ptr<Fib>(0),Ptr<Name>(0));
 	    Ptr<EntryNrImpl> fentry = ns3::Create<EntryNrImpl>(*this,interest,fibEntry);
 		Ptr<Entry> pitEntry = DynamicCast<Entry>(fentry);
 		m_pitContainer.push_back(pitEntry);
-
+		this->Print(std::cout);
 	}
-	//NS_LOG_UNCOND("update pit:"<<os.str());
-	//NS_LOG_DEBUG("update pit:"<<os.str());
 	return true;
 }
 
 //add by DJ on Jan 4,2016:update pit
-bool NrPitImpl::RemovePitEntry(const Name& name){
+bool NrPitImpl::RemovePitEntry(const Name& name)
+{
 	std::vector<Ptr<Entry> >::iterator pit=m_pitContainer.begin();
-	Ptr<Entry> entry = *pit;
-	for(;pit!=m_pitContainer.end();++pit){
+	//Ptr<Entry> entry = *pit;
+	for(;pit!=m_pitContainer.end();++pit)
+	{
 		Ptr<EntryNrImpl> pitEntry = DynamicCast<EntryNrImpl>(*pit);
 		if(pitEntry->getEntryName() == name.toUri())
 		{
-			pitEntry->RemoveIncomingNeighbors(name.toUri());
+			//pitEntry->RemoveIncomingNeighbors(name.toUri());
+			m_pitContainer.erase(pit);
+			this->Print(std::cout);
 			return true;
 		}
 	}
+	this->Print(std::cout);
 	return false;
 }
 
@@ -269,7 +236,13 @@ NrPitImpl::MarkErased (Ptr<Entry> item)
 void
 NrPitImpl::Print (std::ostream& os) const
 {
-
+	os<<"PIT content ";
+	std::vector<Ptr<Entry> >::const_iterator it;
+	for(it=m_pitContainer.begin();it!=m_pitContainer.end();++it)
+	{
+		os<<"name:   "<<(*it)->GetPrefix().toUri()<<"    ";
+	}
+	os<<std::endl;
 }
 
 uint32_t

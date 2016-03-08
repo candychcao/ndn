@@ -119,6 +119,10 @@ public:
   std::vector<Ptr<Entry> > getPIT(){
   	   return m_pitContainer;
      }
+  void setPIT(std::vector<Ptr<Entry> > pit)
+  {
+	  m_pitContainer = pit;
+  }
 protected:
   // inherited from Object class
   virtual void NotifyNewAggregate (); ///< @brief Even when object is aggregated to another Object

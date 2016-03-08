@@ -66,6 +66,7 @@ public:
 	}
 	void Print(std::ostream &os) const;
 	void setDataName(std::string name);
+	void setNb(std::unordered_map< std::string,uint32_t >  nb);
 //private:
 	//void AddNeighborTimeoutEvent(uint32_t id);
 
