@@ -40,6 +40,7 @@ public:
 	static void IncreaseInterestedNodeCounter();
 	static void IncreaseInterestSum();
 	static void IncreaseDataSum();
+	static void IncreaseDetectTimes();
 
 	static void IncreaseForwardCounter();
 	static void IncreaseInterestForwardCounter();
@@ -51,6 +52,8 @@ public:
 	static double GetAverageDataForwardTimes();
 	static double GetAverageDelay();
 	static void updateDelay(double d);
+	static uint32_t GetInterestNum();
+	static uint32_t GetDetectTimes();
 
 	//4 . appIndex
 	static AppIndexType appIndex;
@@ -63,6 +66,7 @@ public:
 	static uint32_t interestForwardSum;
 	static uint32_t dataForwardSum;
 	static uint32_t forwardSum;
+	static uint32_t detectTimes;
 	static double delay;
 };
 

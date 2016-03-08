@@ -49,36 +49,40 @@ uint32_t tableHeader::GetSerializedSize() const
 	uint32_t size=0;
 	size += sizeof(m_sourceId);
 
+	Ptr<pit::nrndn::EntryNrImpl> tempPitEntry;
 	//m_pitContainer.size():
 	size += sizeof(uint32_t);
 	for(uint32_t i = 0; i<m_pitContainer.size(); ++i)
 	{
+		tempPitEntry =  DynamicCast<ndn::pit::nrndn::EntryNrImpl>(m_pitContainer[i]);
 		//m_interest_name.size():
 		size += sizeof(uint32_t);
-		size += m_pitContainer[i]->getEntryName().size();
+		size += tempPitEntry->getEntryName().size();
 
 		//m_incomingnbs.size():
 		size += sizeof(uint32_t);
 		std::unordered_set<std::string>::const_iterator it;
-		for(it = (m_pitContainer[i]->getIncomingnbs()).begin() ; it != m_pitContainer[i]->getIncomingnbs().end(); ++it)
+		for(it = (tempPitEntry->getIncomingnbs()).begin() ; it != tempPitEntry->getIncomingnbs().end(); ++it)
 		{
 			size += sizeof(uint32_t);
 			size +=(*it).size();
 		}
 	}
 
+	Ptr<fib::nrndn::EntryNrImpl> tempFibEntry;
 	//m_fibContainer.size():
 	size += sizeof(uint32_t);
 	for(uint32_t i = 0; i<m_fibContainer.size(); ++i)
 	{
+		 tempFibEntry =DynamicCast<ndn::fib::nrndn::EntryNrImpl>( m_fibContainer[i]);
 		//m_interest_name.size():
 		size += sizeof(uint32_t);
-		size += m_fibContainer[i]->getEntryName().size();
+		size +=  tempFibEntry->getEntryName().size();
 
 		//m_incomingnbs.size():
 		size += sizeof(uint32_t);
 		std::unordered_map<std::string, uint32_t >::const_iterator it;
-		for(it = (m_fibContainer[i]->getIncomingnbs()).begin(); it != m_fibContainer[i]->getIncomingnbs().end(); ++it)
+		for(it = ( tempFibEntry->getIncomingnbs()).begin(); it !=  tempFibEntry->getIncomingnbs().end(); ++it)
 		{
 			size += sizeof(uint32_t);
 			size +=it->first.size();
@@ -93,16 +97,18 @@ void tableHeader::Serialize(Buffer::Iterator start) const
 	Buffer::Iterator& i = start;
 	i.WriteHtonU32(m_sourceId);
 
+	Ptr<pit::nrndn::EntryNrImpl> tempPitEntry;
 	i.WriteHtonU32(m_pitContainer.size());
 	for(uint32_t it = 0; it<m_pitContainer.size(); ++it)
 	{
-		i.WriteHtonU32(m_pitContainer[it]->getEntryName().size());
-		for(uint32_t j = 0; j<m_pitContainer[it]->getEntryName().size(); ++j)
-				i.Write((uint8_t*)&((m_pitContainer[it]->getEntryName())[j]),sizeof(char));
+		tempPitEntry =DynamicCast<ndn::pit::nrndn::EntryNrImpl>( m_pitContainer[it]);
+		i.WriteHtonU32(tempPitEntry->getEntryName().size());
+		for(uint32_t j = 0; j<tempPitEntry->getEntryName().size(); ++j)
+				i.Write((uint8_t*)&((tempPitEntry->getEntryName())[j]),sizeof(char));
 
-		i.WriteHtonU32(m_pitContainer[it]->getIncomingnbs().size());
+		i.WriteHtonU32(tempPitEntry->getIncomingnbs().size());
 		std::unordered_set<std::string>::const_iterator j;
-		for(j = (m_pitContainer[it]->getIncomingnbs()).begin(); j != m_pitContainer[it]->getIncomingnbs().end(); ++j)
+		for(j = (tempPitEntry->getIncomingnbs()).begin(); j != tempPitEntry->getIncomingnbs().end(); ++j)
 		{
 			i.WriteHtonU32((*j).size());
 			for(uint32_t k = 0; k<(*j).size(); ++k)
@@ -110,16 +116,18 @@ void tableHeader::Serialize(Buffer::Iterator start) const
 		}
 	}
 
+	Ptr<fib::nrndn::EntryNrImpl> tempFibEntry;
 	i.WriteHtonU32(m_fibContainer.size());
 	for(uint32_t it = 0; it<m_fibContainer.size(); ++it)
 	{
-		i.WriteHtonU32(m_fibContainer[it]->getEntryName().size());
-		for(uint32_t j = 0; j<m_fibContainer[it]->getEntryName().size(); ++j)
-				i.Write((uint8_t*)&((m_fibContainer[it]->getEntryName())[j]),sizeof(char));
+		tempFibEntry =DynamicCast<ndn::fib::nrndn::EntryNrImpl>(m_fibContainer[it]);
+		i.WriteHtonU32(tempFibEntry->getEntryName().size());
+		for(uint32_t j = 0; j<tempFibEntry->getEntryName().size(); ++j)
+				i.Write((uint8_t*)&((tempFibEntry->getEntryName())[j]),sizeof(char));
 
-		i.WriteHtonU32(m_fibContainer[it]->getIncomingnbs().size());
+		i.WriteHtonU32(tempFibEntry->getIncomingnbs().size());
 		std::unordered_map<std::string, uint32_t >::const_iterator j;
-		for(j = (m_fibContainer[it]->getIncomingnbs()).begin(); j != m_fibContainer[it]->getIncomingnbs().end(); ++j)
+		for(j = (tempFibEntry->getIncomingnbs()).begin(); j != tempFibEntry->getIncomingnbs().end(); ++j)
 		{
 			i.WriteHtonU32(j->first.size());
 			for(uint32_t k = 0; k<j->first.size(); ++k)
@@ -148,7 +156,7 @@ uint32_t tableHeader::Deserialize(Buffer::Iterator start)
 			i.Read((uint8_t*)&(tempchar),sizeof(char));
 			tempstring += tempchar;
 		}
-		//temp->setinterestname(tempstring);
+		temp->setInterestName(tempstring);
 
 		std::unordered_set< std::string > tempnb;
 		uint32_t nbsize =  i.ReadNtohU32();
@@ -163,8 +171,8 @@ uint32_t tableHeader::Deserialize(Buffer::Iterator start)
 			}
 			tempnb.insert(tempstring);
 		}
-		//temp->setnb(tempnb);
-		m_pitContainer.push_back(temp);
+		temp->setNb(tempnb);
+		m_pitContainer.push_back(DynamicCast<ndn::pit::Entry>(temp));
 	}
 
 	m_fibContainer.clear();
@@ -181,7 +189,7 @@ uint32_t tableHeader::Deserialize(Buffer::Iterator start)
 			i.Read((uint8_t*)&(tempchar),sizeof(char));
 			tempstring += tempchar;
 		}
-		//temp->setinterestname(tempstring);
+		temp->setDataName(tempstring);
 
 		std::unordered_map< std::string,uint32_t > tempnb;
 		uint32_t nbsize =  i.ReadNtohU32();
@@ -198,8 +206,8 @@ uint32_t tableHeader::Deserialize(Buffer::Iterator start)
 			tempttl =  i.ReadNtohU32();
 			tempnb.insert(make_pair(tempstring,tempttl));
 		}
-		//temp->setnb(tempnb);
-		m_fibContainer.push_back(temp);
+		temp->setNb(tempnb);
+		m_fibContainer.push_back(DynamicCast<ndn::fib::Entry>(temp));
 	}
 
 	uint32_t dist = i.GetDistanceFrom(start);

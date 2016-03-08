@@ -29,6 +29,7 @@ uint32_t nrUtils::dataNum = 0;
 uint32_t nrUtils::interestForwardSum = 0;
 uint32_t nrUtils::dataForwardSum = 0;
 uint32_t nrUtils::forwardSum = 0;
+uint32_t nrUtils::detectTimes = 0;
 double nrUtils::delay = 0;
 
 nrUtils::nrUtils()
@@ -45,6 +46,11 @@ nrUtils::~nrUtils()
 void nrUtils::IncreaseNodeCounter()
 {
 	interestedNodeSum++;
+}
+
+void nrUtils::IncreaseDetectTimes()
+{
+	detectTimes++;
 }
 
 void nrUtils::IncreaseInterestedNodeCounter()
@@ -105,6 +111,15 @@ double nrUtils::GetAverageDelay()
 double nrUtils::GetAverageHitRate()
 {
 	return interestedNodeReceivedSum / interestedNodeSum;
+}
+
+uint32_t nrUtils:: GetInterestNum()
+{
+	return interestNum;
+}
+uint32_t nrUtils::GetDetectTimes()
+{
+	return detectTimes;
 }
 
 } /* namespace nrndn */

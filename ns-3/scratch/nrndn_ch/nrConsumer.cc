@@ -20,6 +20,8 @@
 #include "nrndn-Header.h"
 #include "nrUtils.h"
 
+#include <map>
+
 
 NS_LOG_COMPONENT_DEFINE ("ndn.nrndn.nrConsumer");
 
@@ -114,30 +116,29 @@ void nrConsumer::SendPacket()
 	  interest->SetNonce(m_rand.GetValue());//just generate a random number
 	  interest->SetInterestLifetime    (m_interestLifeTime);
 
+	   //add header;
+	  ndn::nrndn::nrndnHeader nrheader;
+	  nrheader.setSourceId(GetNode()->GetId());
+	  nrheader.setX(m_sensor->getX());
+	  nrheader.setY(m_sensor->getY());
+	  std::string lane = m_sensor->getLane();
+	  nrheader.setPreLane(lane);
+	  nrheader.setCurrentLane(lane);
 
-	  	 //add header;
-	  	 ndn::nrndn::nrndnHeader nrheader;
-	  	 nrheader.setSourceId(GetNode()->GetId());
-	  	 nrheader.setX(m_sensor->getX());
-	  	 nrheader.setY(m_sensor->getY());
-	  	 std::string lane = m_sensor->getLane();
-	  	 nrheader.setPreLane(lane);
-	  	nrheader.setCurrentLane(lane);
+	  Ptr<Packet> newPayload = Create<Packet> ();
+	  newPayload->AddHeader(nrheader);
+	  interest->SetPayload(newPayload);
 
-	  	 Ptr<Packet> newPayload = Create<Packet> ();
-	  	 newPayload->AddHeader(nrheader);
-	  	 interest->SetPayload(newPayload);
+	  cout<<"node: "<<GetNode()->GetId()<<"  send interest packet,name: "<<m_prefix.toUri()<<" in consumer"<<endl;
 
-	  	 cout<<"node: "<<GetNode()->GetId()<<"  send interest packet,name: "<<m_prefix.toUri()<<" in consumer"<<endl;
+	  m_transmittedInterests (interest, this, m_face);
+	  m_face->ReceiveInterest (interest);
 
-	    m_transmittedInterests (interest, this, m_face);
-	    m_face->ReceiveInterest (interest);
+	  interestSent[interest->GetNonce()] = m_prefix.toUri() ;
+	  msgTime[interest->GetNonce()] = Simulator::Now().GetSeconds();
 
-	    interestSent.push_back(interest->GetNonce());
-	    msgTime[interest->GetNonce()] = Simulator::Now().GetSeconds();
-
-	    nrUtils::IncreaseNodeCounter();
-	    nrUtils::IncreaseInterestSum();
+	  nrUtils::IncreaseNodeCounter();
+	  nrUtils::IncreaseInterestSum();
 }
 
 void nrConsumer::OnData(Ptr<const Data> data)
@@ -153,20 +154,55 @@ void nrConsumer::OnData(Ptr<const Data> data)
 
 	NS_ASSERT_MSG(packetPayloadSize == m_virtualPayloadSize,"packetPayloadSize is not equal to "<<m_virtualPayloadSize);
 
-	for(uint32_t i = 0; i < interestSent.size(); ++i)
+	map<uint32_t, string>::iterator it = interestSent.find(signature);
+	if(it != interestSent.end())
 	{
-		if(interestSent[i] == signature)
-		{
-			interestSent[i] = 0;
-			nrUtils::IncreaseInterestedNodeCounter();
-			double delay = Simulator::Now().GetSeconds() - msgTime[signature];
-			nrUtils::updateDelay(delay);
-			std::cout<<"At time "<<Simulator::Now().GetSeconds()<<":"<<m_node->GetId()<<"\treceived data "<<name.toUri()<<" from "<<nodeId<<"\tSignature "<<signature<<endl;
-		}
+		nrUtils::IncreaseInterestedNodeCounter();
+		double delay = Simulator::Now().GetSeconds() - msgTime[signature];
+		nrUtils::updateDelay(delay);
+		std::cout<<m_node->GetId()<<"\treceived data "<<name.toUri()<<" from "<<nodeId<<"\tSignature "<<signature<<endl;
+		interestSent.erase(it);
 	}
+}
 
-	//double delay = Simulator::Now().GetSeconds() - data->GetTimestamp().GetSeconds();
-	//nrUtils::InsertTransmissionDelayItem(nodeId,signature,delay);////?????????????????????????????
+void nrConsumer::laneChange(std::string oldLane, std::string newLane)
+{
+	if(interestSent.empty())
+		return;
+	if(oldLane == m_oldLane)
+		return;
+
+	m_oldLane = oldLane;
+
+	  cout<<m_node->GetId()<<" lane changed from "<<oldLane<<" to "<<newLane<<endl;
+
+	  uint32_t num = GetNode()->GetId() % 3 + 1;
+	  m_prefix.appendNumber(num);
+
+	  Ptr<Interest> interest = Create<Interest> (Create<Packet>(m_virtualPayloadSize));
+	  Ptr<Name> interestName = Create<Name> (m_prefix);
+	  interest->SetName(interestName);
+	  interest->SetNonce(m_rand.GetValue());//just generate a random number
+	  interest->SetInterestLifetime    (m_interestLifeTime);
+	  interest->SetScope(MOVE_TO_NEW_LANE);
+
+	   //add header;
+	  ndn::nrndn::nrndnHeader nrheader;
+	  nrheader.setSourceId(GetNode()->GetId());
+	  nrheader.setX(m_sensor->getX());
+	  nrheader.setY(m_sensor->getY());
+	  std::string lane = m_sensor->getLane();
+	  nrheader.setPreLane(oldLane);
+	  nrheader.setCurrentLane(lane);
+
+	  Ptr<Packet> newPayload = Create<Packet> ();
+	  newPayload->AddHeader(nrheader);
+	  interest->SetPayload(newPayload);
+
+	  cout<<"node: "<<GetNode()->GetId()<<"  send MOVE_TO_NEW_LANE packet,name: "<<m_prefix.toUri()<<" in consumer"<<endl;
+
+	  m_transmittedInterests (interest, this, m_face);
+	  m_face->ReceiveInterest (interest);
 }
 
 void nrConsumer::NotifyNewAggregate()
@@ -187,6 +223,8 @@ void nrConsumer::DoInitialize(void)
 	{
 		m_sensor =  m_node->GetObject<ndn::nrndn::NodeSensor>();
 		NS_ASSERT_MSG(m_sensor,"nrConsumer::DoInitialize cannot find ns3::ndn::nrndn::NodeSensor");
+		if(m_sensor != NULL)
+				m_sensor->TraceConnectWithoutContext ("LaneChange", MakeCallback (&nrConsumer::laneChange,this));
 	}
 	super::DoInitialize();
 }

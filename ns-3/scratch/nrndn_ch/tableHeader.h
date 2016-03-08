@@ -11,6 +11,8 @@
 #include "ns3/header.h"
 #include "ns3/address-utils.h"
 #include "ns3/ndn-name.h"
+#include "ns3/ndn-pit-entry.h"
+#include "ns3/ndn-fib-entry.h"
 
 #include "ndn-pit-entry-nrimpl.h"
 #include "ndn-fib-entry-nrimpl.h"
@@ -49,10 +51,33 @@ public:
 		m_sourceId = sourceId;
 	}
 
+	std::vector<Ptr<pit::Entry> >	getPitContainer()
+	{
+		return m_pitContainer;
+	}
+
+	std::vector<Ptr<fib::Entry > >	getFibContainer()
+	{
+		return m_fibContainer;
+	}
+
+	void setPIT(std::vector<Ptr<pit::Entry> > pit)
+	{
+		m_pitContainer = pit;
+	}
+
+	void setFIB(std::vector<Ptr<fib::Entry > > fib)
+	{
+		m_fibContainer = fib;
+	}
+
 private:
 	uint32_t		m_sourceId;	//\ (source)	id of source node (source)
-	std::vector<Ptr<pit::nrndn::EntryNrImpl> >		m_pitContainer;
-	std::vector<Ptr<fib::nrndn::EntryNrImpl > >		m_fibContainer;
+	 std::vector<Ptr<pit::Entry> >			m_pitContainer;
+	std::vector<Ptr<fib::Entry> >		m_fibContainer;
+
+	friend class pit::nrndn::EntryNrImpl;
+	friend class fib::nrndn::EntryNrImpl;
 };
 
 } /* namespace nrndn */

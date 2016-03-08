@@ -115,6 +115,8 @@ private:
 
 	void NotifyUpperLayer(Ptr<Data> data);
 
+	void laneChange(std::string, std::string);
+
 
 	void ExpireInterestPacketTimer(uint32_t nodeId,uint32_t seq);
 
@@ -142,6 +144,8 @@ private:
 
 	void ForwardResourcePacket(Ptr<Data> src);
 
+	void ForwardMoveToNewLanePacket(Ptr<Interest> src);
+
 
 	void ReplyConfirmPacket(Ptr<Interest> interest);
 
@@ -151,6 +155,8 @@ private:
 
 
 	void PrepareInterestPacket(Ptr<Interest> interest);
+
+	void PrepareMoveToNewLanePacket(Ptr<Interest> interest);
 
 	void PrepareDetectPacket(Ptr<Interest> interest);
 
@@ -222,6 +228,8 @@ private:
 	uint32_t m_virtualPayloadSize;
 
 	Time m_freshness;
+
+	 string m_oldLane;
 };
 } /* namespace nrndn */
 } /* namespace fw */

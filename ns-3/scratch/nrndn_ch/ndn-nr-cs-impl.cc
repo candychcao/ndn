@@ -47,7 +47,7 @@ NrCsImpl::GetTypeId ()
 }
 
 NrCsImpl::NrCsImpl ():
-		m_cleanInterval(Seconds(10.0))
+		m_cleanInterval(Seconds(300.0))
 {
 }
 
@@ -91,11 +91,16 @@ NrCsImpl::NotifyNewAggregate ()
 
 bool NrCsImpl::Add (Ptr<const Data> data)
 {
-	if(Find(data->GetName())){
-		return false;
+	std::cout<<"add CS Entry  name:"<<data->GetName().toUri()<<std::endl;
+	if(Find(data->GetName()))
+	{
+		this->Print(std::cout);
+		return true;
 	}
-    Ptr<Entry> csEntry = ns3::Create<Entry>(this,data) ;
+    Ptr<cs::Entry> csEntry = ns3::Create<cs::Entry>(this,data) ;
     m_csContainer.push_back(csEntry);
+
+    this->Print(std::cout);
 	return true;
 }
 
@@ -118,7 +123,7 @@ NrCsImpl::Find (const Name &prefix)
 	//NS_ASSERT_MSG(false,"In NrCsImpl,NrCsImpl::Find (const Name &prefix) should not be invoked");
 	 NS_LOG_INFO ("Finding prefix"<<prefix.toUri());
 	 std::vector<Ptr<Entry> >::iterator it;
-	 NS_ASSERT_MSG(m_csContainer.size()!=0,"Empty fib container. No initialization?");
+	 //NS_ASSERT_MSG(m_csContainer.size()!=0,"Empty cs container. No initialization?");
 	 for(it=m_csContainer.begin();it!=m_csContainer.end();++it)
 	 {
 		 if((*it)->GetName()==prefix)
@@ -167,7 +172,8 @@ NrCsImpl::InitializeNrFibEntry()
 }*/
   
 Ptr<Data>
-NrCsImpl::Lookup (Ptr<const Interest> interest){
+NrCsImpl::Lookup (Ptr<const Interest> interest)
+{
    return 0;
 }
 
@@ -182,7 +188,14 @@ NrCsImpl::MarkErased (Ptr<Entry> item)
 void
 NrCsImpl::Print (std::ostream& os) const
 {
-
+	os<<"CS Content Data Names:  ";
+	std::vector<Ptr<Entry> >::const_iterator it = m_csContainer.begin();
+	for( ; it!=m_csContainer.end(); ++it)
+	{
+		os<<(*it)->GetName().toUri()<<" ";
+	}
+	os<<std::endl;
+	return;
 }
 
 uint32_t

@@ -93,7 +93,7 @@ void nrProducer::StartApplication()
 	App::StartApplication();
 	NS_LOG_INFO("NodeID: " << GetNode ()->GetId ());
 
-	Simulator::Schedule (Seconds (10.0), &nrProducer::sendResourcePacket, this);
+	Simulator::Schedule (Seconds (15.0), &nrProducer::sendResourcePacket, this);
 	std::cout<<"siu:"<<"Start producer Application: " << GetNode ()->GetId ()<<endl;
 }
 
@@ -156,7 +156,7 @@ void nrProducer::sendResourcePacket()
 	FwHopCountTag hopCountTag;
 	data->GetPayload()->AddPacketTag(hopCountTag);
 
-	std::cout<<"siu:"<<"node("<< GetNode()->GetId() <<")\t sendResourcePacket:" << data->GetName ()<<",signature:"<<data->GetSignature()<<std::endl;
+	std::cout<<"siu:"<<"node("<< GetNode()->GetId() <<")\t send Resource Packet in producer:" << data->GetName ()<<",signature:"<<data->GetSignature()<<std::endl;
 
 	m_face->ReceiveData(data);
 	m_transmittedDatas(data, this, m_face);

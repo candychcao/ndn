@@ -47,9 +47,9 @@ public:
   /// Run simulation of nrndn
   void RunNrndnSim ();
   /// Run simulation of distance based forwarding
-  void RunDistSim ();
+ /// void RunDistSim ();
   /// Run simulation of CDS based forwarding
-  void RunCDSSim ();
+ /// void RunCDSSim ();
   /// Report results
   void Report ();
 
@@ -125,6 +125,8 @@ private:
   double averageDataForwardTimes;
   double averageDelay;
   uint32_t SumForwardTimes;
+  uint32_t detectTimes;
+  uint32_t interestNum;
 
   bool noFwStop;
 
@@ -139,14 +141,14 @@ private:
   void InstallInternetStack ();
   void InstallSensor();
   void InstallNrNdnStack();
-  void InstallDistNdnStack();
-  void InstallCDSNdnStack();
+ // void InstallDistNdnStack();
+  //void InstallCDSNdnStack();
   void InstallMobility();
-  void InstallTestMobility();
+ // void InstallTestMobility();
   void InstallNrndnApplications ();
-  void InstallDistApplications();
-  void InstallCDSApplications();
-  void InstallTestApplications();
+  //void InstallDistApplications();
+  //void InstallCDSApplications();
+  //void InstallTestApplications();
 
   void InstallTraffics();
 
@@ -174,8 +176,8 @@ int main (int argc, char **argv)
 //-----------------------------------------------------------------------------
 //构造函数
 nrndnExample::nrndnExample () :
-  size (3),
-  totalTime (36000),
+  size (3),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  totalTime (36000),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   readTotalTime(0),
   alltoallTime(-1),
   pcap (false),
@@ -186,11 +188,11 @@ nrndnExample::nrndnExample () :
   //phyMode("OfdmRate24Mbps"),
   verbose (false),
   flood(false),
-  transRange(300),
+  transRange(300),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   HelloLogEnable(true),
   accidentNum(30),//默认3
   method(0),
-  interestFrequency(0.5),
+  interestFrequency(0.5),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
   hitRate(0),
   accuracyRate(0),
   arrivalRate(0),
@@ -199,6 +201,8 @@ nrndnExample::nrndnExample () :
   averageDataForwardTimes(0),
   averageDelay(0),
   SumForwardTimes(0),
+  detectTimes(0),
+  interestNum(0),
   noFwStop(false),
   TTLMax(3),
   virtualPayloadSize(1024)
@@ -222,7 +226,7 @@ nrndnExample::Configure (int argc, char **argv)
   time_t now = time(NULL);
   cout<<"NR-NDN simulation begin at "<<ctime(&now);
 
-  SeedManager::SetSeed (12345);
+  SeedManager::SetSeed (12345);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   CommandLine cmd;
 
   cmd.AddValue ("pcap", "Write PCAP traces.", pcap);
@@ -257,12 +261,12 @@ void nrndnExample::Run()
 	case 0:
 		RunNrndnSim();
 		break;
-	case 1:
-		RunDistSim();
-		break;
-	case 2:
-		RunCDSSim();
-		break;
+	//case 1:
+		//RunDistSim();
+		//break;
+	//case 2:
+		//RunCDSSim();
+		//break;
 	default:
 		cout<<"Undefine method"<<endl;
 		break;
@@ -307,7 +311,7 @@ nrndnExample::RunNrndnSim ()
 	Simulator::Destroy();
 }
 
-
+/*
 void nrndnExample::RunDistSim()
 {
 	name = "Dist-Simulation";
@@ -359,7 +363,7 @@ void nrndnExample::RunCDSSim()
 
 	Simulator::Destroy();
 }
-
+*/
 void
 nrndnExample::Report ()
 {
@@ -375,6 +379,8 @@ nrndnExample::Report ()
 			<<ForwardTimes<<'\t'
 			<<averageInterestForwardTimes<<'\t'
 			<<averageDataForwardTimes<<'\t'
+			<<interestNum<<'\t'
+			<<detectTimes<<'\t'
 			//<<SumForwardTimes<<'\t'
 			//<<nrUtils::InterestByteSent<<'\t'
 			//<<nrUtils::HelloByteSent<<'\t'
@@ -508,13 +514,14 @@ nrndnExample::InstallNrNdnStack()
 	uint32_t pitCleanInterval = 1.0 / interestFrequency * 3.0;
 	pitCleanIntervalStr<<pitCleanInterval;
 	cout<<"pitInterval="<<pitCleanIntervalStr.str()<<endl;
-	ndnHelper.SetForwardingStrategy ("ns3::ndn::fw::nrndn::NavigationRouteHeuristic","HelloLogEnable",str,"NoFwStop",noFwStopStr,"TTLMax",TTLMaxStr.str());
-	ndnHelper.SetContentStore ("ns3::ndn::cs::Lru", "MaxSize", "1000");
-	ndnHelper.SetPit("ns3::ndn::pit::nrndn::NrPitImpl","CleanInterval",pitCleanIntervalStr.str());
+	ndnHelper.SetForwardingStrategy ("ns3::ndn::fw::nrndn::NavigationRouteHeuristic","HelloLogEnable",str,"NoFwStop",noFwStopStr);
+	ndnHelper.SetPit("ns3::ndn::pit::nrndn::NrPitImpl");
+	ndnHelper.SetFib("ns3::ndn::fib::nrndn::NrFibImpl");
+	ndnHelper.SetContentStore("ns3::ndn::cs::nrndn::NrCsImpl");
 	ndnHelper.SetDefaultRoutes (true);
 	ndnHelper.Install (nodes);
 }
-
+/*
 void nrndnExample::InstallDistNdnStack()
 {
   NS_LOG_INFO("Installing Dist NDN stack");
@@ -534,7 +541,7 @@ void nrndnExample::InstallCDSNdnStack()
   ndnHelper.SetDefaultRoutes (true);
   ndnHelper.Install (nodes);
 }
-
+*/
 void
 nrndnExample::InstallInternetStack ()
 {
@@ -560,15 +567,13 @@ nrndnExample::InstallMobility()
 	std::cout<<"总时间："<<totalTime<<std::endl;
 }
 
-
-
 void
 nrndnExample::InstallNrndnApplications ()
 {
 	NS_LOG_INFO ("Installing nrndn Applications");
 	ndn::AppHelper consumerHelper ("ns3::ndn::nrndn::nrConsumer");
 	//Ndn application for sending out Interest packets at a "constant" rate (Poisson process)
-	consumerHelper.SetAttribute ("Frequency", DoubleValue (interestFrequency));
+	//consumerHelper.SetAttribute ("Frequency", DoubleValue (interestFrequency));
 	consumerHelper.SetAttribute ("PayloadSize", UintegerValue (virtualPayloadSize));
 
 	for (NodeContainer::Iterator i = nodes.Begin (); i != nodes.End (); ++i)
@@ -627,7 +632,7 @@ void nrndnExample::SetPos(Ptr<MobilityModel> mob)
 	mob->SetPosition(pos);
 	Simulator::Schedule (Seconds (1.0), &nrndnExample::SetPos, this, mob);
 }
-
+/*
 void
 nrndnExample::InstallTestMobility()
 {
@@ -635,7 +640,7 @@ nrndnExample::InstallTestMobility()
 //	randomizer->SetAttribute ("Min", DoubleValue (10));
 //	randomizer->SetAttribute ("Max", DoubleValue (100));
 
-/*	MobilityHelper mobility;
+	MobilityHelper mobility;
 	mobility.SetPositionAllocator ("ns3::RandomBoxPositionAllocator",
 	                               "X", PointerValue (randomizer),
 	                               "Y", PointerValue (randomizer),
@@ -644,7 +649,7 @@ nrndnExample::InstallTestMobility()
 	mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 
 	mobility.Install (nodes);
-*/
+
 	  MobilityHelper mobility;
 	  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
 	                                 "MinX", DoubleValue (0.0),
@@ -656,6 +661,7 @@ nrndnExample::InstallTestMobility()
 	  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 	  mobility.Install (nodes);
 }
+*/
 
 void nrndnExample::InstallSensor()
 {
@@ -665,7 +671,7 @@ void nrndnExample::InstallSensor()
 			"sumodata",PointerValue(mobility));
 	sensorHelper.InstallAll();
 }
-
+/*
 void nrndnExample::InstallTestApplications()
 {
 	//This test use 3 nodes, Consumer A and B send different interest to Producer C.
@@ -679,7 +685,7 @@ void nrndnExample::InstallTestApplications()
 	//If you send the same interest packet for several times, the data producer will
 	//response your interest packet respectively. It may be a waste. So we can set Consumer::MaxSeq
 	//To limit the times interest packet send. For example,just 1.0
-	consumerHelper.SetAttribute ("MaxSeq"/*"Maximum sequence number to request"*/,IntegerValue(10));
+	consumerHelper.SetAttribute ("MaxSeq""Maximum sequence number to request",IntegerValue(10));
 	consumerHelper.Install (nodes.Get(0));
 	consumerHelper.SetPrefix ("/prefix1");
 	consumerHelper.Install (nodes.Get(1));
@@ -690,6 +696,7 @@ void nrndnExample::InstallTestApplications()
 	producerHelper.Install (nodes.Get (2));
 
 }
+*/
 
 void nrndnExample::InstallTraffics()
 {
@@ -717,7 +724,7 @@ void nrndnExample::InstallTraffics()
 	p->ScheduleAccident(15);
 	*/
 }
-
+/*
 void nrndnExample::InstallDistApplications()
 {
 	NS_LOG_INFO ("Installing Dist Applications");
@@ -767,7 +774,7 @@ void nrndnExample::InstallCDSApplications()
 		(*i)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"])->SetAttribute("StopTime", TimeValue (Seconds (stop )));
 	}
 }
-
+*/
 
 
 void
@@ -792,6 +799,10 @@ nrndnExample::getStatistic()
 	averageInterestForwardTimes = nrUtils::GetAverageInterestForwardTimes();
 
 	averageDataForwardTimes = nrUtils::GetAverageInterestForwardTimes();
+
+	interestNum = nrUtils::GetInterestNum();
+
+	detectTimes = nrUtils::GetDetectTimes();
 
 	//SumForwardTimes = AverageDataForwardPair.first + AverageInterestForwardPair.first;
 }
