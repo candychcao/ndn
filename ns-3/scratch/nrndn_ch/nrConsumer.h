@@ -11,8 +11,6 @@
 #include "NodeSensor.h"
 #include "ns3/ndnSIM/apps/ndn-consumer-cbr.h"
 #include <string>
-#include <vector>
-#include <map>
 
 #include "ndn-nr-pit-impl.h"
 #include "ndn-nr-fib-impl.h"
@@ -67,8 +65,6 @@ protected:
 	  virtual void
 	  ScheduleNextPacket ();
 
-	  void laneChange(std::string, std::string);
-
 	  /**
 	   * \brief get the current route for the interests
 	   */
@@ -111,10 +107,6 @@ private:
 
 	  uint32_t m_virtualPayloadSize;
 	  Name m_prefix;
-	  std::map<uint32_t,string> interestSent;
-	  std::map<uint32_t, double> msgTime;
-	  string m_oldLane;
-
 	  //Ptr<ndn::pit::nrndn::NrPitImpl> m_pit;
 	  //Ptr<ndn::fib::nrndn::NrFibImpl> m_fib;
 	  //Ptr<ForwardingStrategy>		m_forwardingStrategy;

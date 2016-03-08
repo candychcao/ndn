@@ -1,10 +1,10 @@
 /*
  * simulation.cc
  *
- *  Created on: jan 7, 2016
- *      Author: ch
- *
+ *  Created on: Dec 25, 2014
+ *      Author: cys
  */
+
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
@@ -35,6 +35,7 @@ using namespace std;
 using namespace ns3::ndn::nrndn;
 //using namespace ns3::ndn;
 using namespace ns3::vanetmobility;
+
 class nrndnExample
 {
 public:
@@ -47,9 +48,9 @@ public:
   /// Run simulation of nrndn
   void RunNrndnSim ();
   /// Run simulation of distance based forwarding
- /// void RunDistSim ();
+  void RunDistSim ();
   /// Run simulation of CDS based forwarding
- /// void RunCDSSim ();
+  void RunCDSSim ();
   /// Report results
   void Report ();
 
@@ -84,20 +85,18 @@ private:
   bool HelloLogEnable;
   ///the number of accident. It will randomly put into the whole simulation
   uint32_t accidentNum;
-
+ ///the method that will run
   uint32_t method;
-
+  /// Iutput data path
   string inputDir;
   /// Output data path
   string outputDir;
   /// Programme name
   string name;
-
+ ///output & input
   std::ofstream os;
-
   // Interest Packet Sending Frequency
   double interestFrequency;
-
   //\}
 
   ///\name network
@@ -109,31 +108,26 @@ private:
 
   ///\name traffic information
   //\{
-//  RoadMap roadmap;
-//  VehicleLoader vl;
+  //  RoadMap roadmap;
+  //  VehicleLoader vl;
   Ptr<VANETmobility> mobility;
   //\}
 
   //hitRate: among all the interested nodes, how many are received
   double hitRate;
-
   //accuracyRate: among all the nodes received, how many are interested
   double accuracyRate;
   double arrivalRate;
-  uint32_t ForwardTimes;
+  double averageForwardTimes;
   double averageInterestForwardTimes;
-  double averageDataForwardTimes;
   double averageDelay;
   uint32_t SumForwardTimes;
-  uint32_t detectTimes;
-  uint32_t interestNum;
 
   bool noFwStop;
-
   uint32_t TTLMax;
   uint32_t virtualPayloadSize;
+
 private:
-  // Initialize
   /// Load traffic data
   void LoadTraffic();
   void CreateNodes ();
@@ -141,18 +135,17 @@ private:
   void InstallInternetStack ();
   void InstallSensor();
   void InstallNrNdnStack();
- // void InstallDistNdnStack();
-  //void InstallCDSNdnStack();
+  void InstallDistNdnStack();
+  void InstallCDSNdnStack();
   void InstallMobility();
- // void InstallTestMobility();
+  void InstallTestMobility();
   void InstallNrndnApplications ();
-  //void InstallDistApplications();
-  //void InstallCDSApplications();
-  //void InstallTestApplications();
-
+  void InstallDistApplications();
+  void InstallCDSApplications();
+  void InstallTestApplications();
   void InstallTraffics();
 
-  // Utility funcitons
+  /// Utility funcitons
   void Look_at_clock();
   void ForceUpdates (std::vector<Ptr<MobilityModel> > mobilityStack);
   void SetPos(Ptr<MobilityModel> mob);
@@ -176,8 +169,8 @@ int main (int argc, char **argv)
 //-----------------------------------------------------------------------------
 //构造函数
 nrndnExample::nrndnExample () :
-  size (3),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  totalTime (36000),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  size (3),
+  totalTime (36000),
   readTotalTime(0),
   alltoallTime(-1),
   pcap (false),
@@ -188,27 +181,24 @@ nrndnExample::nrndnExample () :
   //phyMode("OfdmRate24Mbps"),
   verbose (false),
   flood(false),
-  transRange(300),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  transRange(200),
   HelloLogEnable(true),
   accidentNum(30),//默认3
   method(0),
-  interestFrequency(0.5),//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+  interestFrequency(0.5),
   hitRate(0),
   accuracyRate(0),
   arrivalRate(0),
-  ForwardTimes(0),
+  averageForwardTimes(0),
   averageInterestForwardTimes(0),
-  averageDataForwardTimes(0),
   averageDelay(0),
   SumForwardTimes(0),
-  detectTimes(0),
-  interestNum(0),
   noFwStop(false),
   TTLMax(3),
   virtualPayloadSize(1024)
 {
 	//os =  std::cout;
-	string home         = getenv("HOME");
+	string home         = getenv("HOME");       /////????环境变量HOME的值在哪里指定的？？？？？？？？？（值是“/home/siukwan”）
 	inputDir  = home +"/input";
 	outputDir = home +"/input";
 }
@@ -226,7 +216,7 @@ nrndnExample::Configure (int argc, char **argv)
   time_t now = time(NULL);
   cout<<"NR-NDN simulation begin at "<<ctime(&now);
 
-  SeedManager::SetSeed (12345);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  SeedManager::SetSeed (12345);
   CommandLine cmd;
 
   cmd.AddValue ("pcap", "Write PCAP traces.", pcap);
@@ -261,12 +251,12 @@ void nrndnExample::Run()
 	case 0:
 		RunNrndnSim();
 		break;
-	//case 1:
-		//RunDistSim();
-		//break;
-	//case 2:
-		//RunCDSSim();
-		//break;
+	case 1:
+		RunDistSim();
+		break;
+	case 2:
+		RunCDSSim();
+		break;
 	default:
 		cout<<"Undefine method"<<endl;
 		break;
@@ -296,8 +286,8 @@ nrndnExample::RunNrndnSim ()
 	std::cout<<"安装Nrndn应用程序"<<std::endl;
 	InstallNrndnApplications();
 	//InstallTestApplications();
-	//std::cout<<"安装交通状况"<<std::endl;
-	//InstallTraffics();
+	std::cout<<"安装交通状况"<<std::endl;
+	InstallTraffics();
 
 
 	Simulator::Schedule(Seconds(0.0), &nrndnExample::Look_at_clock, this);
@@ -311,7 +301,7 @@ nrndnExample::RunNrndnSim ()
 	Simulator::Destroy();
 }
 
-/*
+
 void nrndnExample::RunDistSim()
 {
 	name = "Dist-Simulation";
@@ -363,7 +353,7 @@ void nrndnExample::RunCDSSim()
 
 	Simulator::Destroy();
 }
-*/
+
 void
 nrndnExample::Report ()
 {
@@ -372,30 +362,27 @@ nrndnExample::Report ()
 	getStatistic();
 
 	//2. output the result
-	os//<<arrivalRate <<'\t'
-			//<<accuracyRate<<'\t'
+	os<<arrivalRate <<'\t'
+			<<accuracyRate<<'\t'
 			<<hitRate<<'\t'
 			<<averageDelay<<'\t'
-			<<ForwardTimes<<'\t'
+			<<averageForwardTimes<<'\t'
 			<<averageInterestForwardTimes<<'\t'
-			<<averageDataForwardTimes<<'\t'
-			<<interestNum<<'\t'
-			<<detectTimes<<'\t'
-			//<<SumForwardTimes<<'\t'
-			//<<nrUtils::InterestByteSent<<'\t'
-			//<<nrUtils::HelloByteSent<<'\t'
-			//<<nrUtils::DataByteSent<<'\t'
-			//<<nrUtils::ByteSent
-			<<endl;
+			<<SumForwardTimes<<'\t'
+			<<nrUtils::InterestByteSent<<'\t'
+			<<nrUtils::HelloByteSent<<'\t'
+			<<nrUtils::DataByteSent<<'\t'
+			<<nrUtils::ByteSent<<endl;
 }
 
 void
 nrndnExample::LoadTraffic()
 {
 	cout<<"Method: "<<name<<endl;
+
+	//指定/打开输入输出文件
 	DIR* dir=NULL;
 	DIR* subdir=NULL;
-	//打开数据源
 	if((dir = opendir(inputDir.data()))==NULL)
 		NS_FATAL_ERROR("Cannot open input path "<<inputDir.data()<<", Aborted.");
 	outputDir += '/' + name;
@@ -408,17 +395,16 @@ nrndnExample::LoadTraffic()
 	string netxmlpath   = inputDir + "/input_net.net.xml";
 	string routexmlpath = inputDir + "/routes.rou.xml";
 	string fcdxmlpath   = inputDir + "/fcdoutput.xml";
-
 	string outfile      = outputDir + "/result.txt";
-
 	std::cout<<"输出文件路径："<<outfile<<std::endl;
 	os.open(outfile.data(),ios::out);
 	std::cout<<"文件打开成功。"<<std::endl;
 
+	//读取SUMO生成的车辆移动信息
 	VANETmobilityHelper mobilityHelper;
 	mobility=mobilityHelper.GetSumoMObility(netxmlpath,routexmlpath,fcdxmlpath);
 	std::cout<<"读取完毕！"<<std::endl;
-//获取结点size
+    //获取结点size
 	size = mobility->GetNodeSize();
 	std::cout<<"节点size："<<size<<std::endl;
 }
@@ -427,21 +413,22 @@ void
 nrndnExample::CreateNodes ()
 {
 	std::cout << "Creating " << (unsigned) size << " vehicle nodes.\n";
+	//创建车辆节点并命名
 	nodes.Create(size);
-	// Name nodes
 	for (uint32_t i = 0; i < size; ++i)
 	{
 		std::ostringstream os;
 		os << "vehicle-" << i;
 		Names::Add(os.str(), nodes.Get(i));
 	}
-
 	std::cout << "创建完毕\n";
 }
 
 void
 nrndnExample::CreateDevices ()
-{//设置网卡的，不用修改
+{
+	//std::cout<<"CreateDevices..."<<std::endl;
+	//设置网卡的，不用修改
 	// disable fragmentation for frames below 2200 bytes
 	Config::SetDefault("ns3::WifiRemoteStationManager::FragmentationThreshold",
 			StringValue("2200"));
@@ -490,11 +477,31 @@ nrndnExample::CreateDevices ()
 	devices = wifi.Install(wifiPhy, wifiMac, nodes);
 
     if (pcap)
-	{
 		wifiPhy.EnablePcapAll(std::string("aodv"));
-	}
 }
 
+void
+nrndnExample::InstallMobility()
+{
+	//double maxTime = 0;
+	std::cout<<"正在安装mobility..."<<std::endl;
+	mobility->Install();
+	std::cout<<"正在读取总时间："<<std::endl;
+	readTotalTime = mobility->GetReadTotalTime();
+	totalTime = readTotalTime < totalTime ? readTotalTime : totalTime;
+	std::cout<<"总时间："<<totalTime<<std::endl;
+}
+
+void nrndnExample::InstallSensor()
+{
+	NS_LOG_INFO ("Installing Sensors");
+	NodeSensorHelper sensorHelper;
+	sensorHelper.SetSensorModel("ns3::ndn::nrndn::SumoNodeSensor",
+			"sumodata",PointerValue(mobility));
+	sensorHelper.InstallAll();
+}
+
+//！！！！！！！！！！！！改！！！！！
 void
 nrndnExample::InstallNrNdnStack()
 {
@@ -508,20 +515,25 @@ nrndnExample::InstallNrNdnStack()
 		str="true";
 	if(noFwStop)
 		noFwStopStr="true";
+
+	//////!!!!!!!!!!!!!!!!!!!!!!!!
 	std::ostringstream TTLMaxStr;
 	TTLMaxStr<<TTLMax;
 	std::ostringstream pitCleanIntervalStr;
 	uint32_t pitCleanInterval = 1.0 / interestFrequency * 3.0;
 	pitCleanIntervalStr<<pitCleanInterval;
 	cout<<"pitInterval="<<pitCleanIntervalStr.str()<<endl;
-	ndnHelper.SetForwardingStrategy ("ns3::ndn::fw::nrndn::NavigationRouteHeuristic","HelloLogEnable",str,"NoFwStop",noFwStopStr);
-	ndnHelper.SetPit("ns3::ndn::pit::nrndn::NrPitImpl");
-	ndnHelper.SetFib("ns3::ndn::fib::nrndn::NrFibImpl");
+	ndnHelper.SetForwardingStrategy ("ns3::ndn::fw::nrndn::NavigationRouteHeuristic","HelloLogEnable",str,"NoFwStop",noFwStopStr,"TTLMax",TTLMaxStr.str());
+	//ndnHelper.SetContentStore ("ns3::ndn::cs::Lru", "MaxSize", "1000");
+	ndnHelper.SetPit("ns3::ndn::pit::nrndn::NrPitImpl","CleanInterval",pitCleanIntervalStr.str());
+	ndnHelper.SetFib("ns3::ndn::fib::nrndn::NrFibImpl","CleanInterval",pitCleanIntervalStr.str());
 	ndnHelper.SetContentStore("ns3::ndn::cs::nrndn::NrCsImpl");
+	//ndnHelper.SetFib( ???????????????????????? );
+
 	ndnHelper.SetDefaultRoutes (true);
 	ndnHelper.Install (nodes);
 }
-/*
+
 void nrndnExample::InstallDistNdnStack()
 {
   NS_LOG_INFO("Installing Dist NDN stack");
@@ -541,7 +553,7 @@ void nrndnExample::InstallCDSNdnStack()
   ndnHelper.SetDefaultRoutes (true);
   ndnHelper.Install (nodes);
 }
-*/
+
 void
 nrndnExample::InstallInternetStack ()
 {
@@ -555,47 +567,70 @@ nrndnExample::InstallInternetStack ()
   interfaces = address.Assign (devices);
 }
 
-void
-nrndnExample::InstallMobility()
-{
-	//double maxTime = 0;
-	std::cout<<"正在安装mobility.."<<std::endl;
-	mobility->Install();
-	std::cout<<"正在读取总时间111："<<std::endl;
-	readTotalTime = mobility->GetReadTotalTime();
-	totalTime = readTotalTime < totalTime ? readTotalTime : totalTime;
-	std::cout<<"总时间："<<totalTime<<std::endl;
-}
-
+//！！！！！！！！！！！！！！改！！！！
 void
 nrndnExample::InstallNrndnApplications ()
 {
 	NS_LOG_INFO ("Installing nrndn Applications");
 	ndn::AppHelper consumerHelper ("ns3::ndn::nrndn::nrConsumer");
 	//Ndn application for sending out Interest packets at a "constant" rate (Poisson process)
-	//consumerHelper.SetAttribute ("Frequency", DoubleValue (interestFrequency));
+	consumerHelper.SetAttribute ("Frequency", DoubleValue (interestFrequency));
 	consumerHelper.SetAttribute ("PayloadSize", UintegerValue (virtualPayloadSize));
-
-	for (NodeContainer::Iterator i = nodes.Begin (); i != nodes.End (); ++i)
-		if((*i)->GetId() > 9)
-			consumerHelper.Install(*i);
-	/////nrUtils::appIndex["ns3::ndn::nrndn::nrConsumer"]=0;
-
+	//If you send the same interest packet for several times, the data producer will
+	//response your interest packet respectively. It may be a waste. So we can set Consumer::MaxSeq
+	//To limit the times interest packet send. For example,just 1.0
+	//consumerHelper.SetAttribute ("MaxSeq"/*"Maximum sequence number to request"*/,IntegerValue(2));
+	consumerHelper.Install(nodes);
+	nrUtils::appIndex["ns3::ndn::nrndn::nrConsumer"]=0;
+/*
+	double start=mobility->GetStartTime(0);
+	double stop =mobility->GetStopTime (0);
+	nodes.Get(0)->GetApplication(0)->SetAttribute("StartTime",TimeValue (Seconds (start)));
+	nodes.Get(0)->GetApplication(0)->SetAttribute("StopTime", TimeValue (Seconds (stop )));
+*/
 	ndn::AppHelper producerHelper ("ns3::ndn::nrndn::nrProducer");
 	//producerHelper.SetPrefix ("/");
 	producerHelper.SetAttribute ("PayloadSize", UintegerValue (virtualPayloadSize));
-	for(uint32_t i=0; i<10; ++i)
-		producerHelper.Install(nodes.Get (i));
-	/////nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"]=1;
+	//producerHelper.Install (nodes.Get (0));
+	producerHelper.Install(nodes);
+	nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"]=1;
 
 	//Setup start and end time;
 	for (NodeContainer::Iterator i = nodes.Begin (); i != nodes.End (); ++i)
 	{
 		double start=mobility->GetStartTime((*i)->GetId());
 		double stop =mobility->GetStopTime ((*i)->GetId());
-		(*i)->GetApplication(0)->SetAttribute("StartTime",TimeValue (Seconds (start)));
-		(*i)->GetApplication(0)->SetAttribute("StopTime", TimeValue (Seconds (stop )));
+		(*i)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrConsumer"])->SetAttribute("StartTime",TimeValue (Seconds (start)));
+		(*i)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrConsumer"])->SetAttribute("StopTime", TimeValue (Seconds (stop )));
+
+		(*i)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"])->SetAttribute("StartTime",TimeValue (Seconds (start)));
+		(*i)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"])->SetAttribute("StopTime", TimeValue (Seconds (stop )));
 	}
+}
+
+void nrndnExample::InstallTraffics()
+{
+	/*SeedManager::SetSeed(1234);
+	UniformVariable rnd(0,nodes.GetN());
+	std::cout<<"插入事件："<<accidentNum<<endl;
+	for(uint32_t i=0;i<accidentNum;++i)
+	{
+		uint32_t index=rnd.GetValue();
+		Ptr<ns3::ndn::nrndn::nrProducer> producer= DynamicCast<ns3::ndn::nrndn::nrProducer>(
+				nodes.Get(index)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"]));
+		NS_ASSERT(producer);
+		producer->addAccident();
+	}
+	std::cout<<"插入事件：完毕"<<endl;
+*/
+	/*
+	uint32_t InsertIndex=10;//for debug only
+	Ptr<ns3::ndn::nrndn::nrProducer> p= DynamicCast<ns3::ndn::nrndn::nrProducer>(
+					nodes.Get(InsertIndex)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"]));
+	p->ScheduleAccident(10);
+	p->ScheduleAccident(13);
+	p->ScheduleAccident(15);
+	*/
 }
 
 void nrndnExample::Look_at_clock()
@@ -632,6 +667,33 @@ void nrndnExample::SetPos(Ptr<MobilityModel> mob)
 	mob->SetPosition(pos);
 	Simulator::Schedule (Seconds (1.0), &nrndnExample::SetPos, this, mob);
 }
+
+void
+nrndnExample::getStatistic()
+{
+	//1. get average arrival rate
+	arrivalRate = nrUtils::GetAverageArrivalRate();
+
+	//2. get average accurate rate
+	accuracyRate=nrUtils::GetAverageAccurateRate();
+
+	//3. get average hit rate
+	hitRate = nrUtils::GetAverageHitRate();
+
+	//4. get average delay
+	averageDelay = nrUtils::GetAverageDelay();
+
+	//5. get average data forward times
+	pair<uint32_t,double> AverageDataForwardPair = nrUtils::GetAverageForwardTimes();
+	averageForwardTimes = AverageDataForwardPair.second;
+
+	//6. get average interest forward times
+	pair<uint32_t,double> AverageInterestForwardPair = nrUtils::GetAverageInterestForwardTimes();
+	averageInterestForwardTimes = AverageInterestForwardPair.second;
+
+	SumForwardTimes = AverageDataForwardPair.first + AverageInterestForwardPair.first;
+}
+
 /*
 void
 nrndnExample::InstallTestMobility()
@@ -640,16 +702,16 @@ nrndnExample::InstallTestMobility()
 //	randomizer->SetAttribute ("Min", DoubleValue (10));
 //	randomizer->SetAttribute ("Max", DoubleValue (100));
 
-	MobilityHelper mobility;
-	mobility.SetPositionAllocator ("ns3::RandomBoxPositionAllocator",
-	                               "X", PointerValue (randomizer),
-	                               "Y", PointerValue (randomizer),
-	                               "Z", PointerValue (randomizer));
-
-	mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-
-	mobility.Install (nodes);
-
+//	MobilityHelper mobility;
+//	mobility.SetPositionAllocator ("ns3::RandomBoxPositionAllocator",
+//	                               "X", PointerValue (randomizer),
+//	                               "Y", PointerValue (randomizer),
+//	                               "Z", PointerValue (randomizer));
+//
+//	mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+//
+//	mobility.Install (nodes);
+//
 	  MobilityHelper mobility;
 	  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
 	                                 "MinX", DoubleValue (0.0),
@@ -661,17 +723,8 @@ nrndnExample::InstallTestMobility()
 	  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 	  mobility.Install (nodes);
 }
-*/
 
-void nrndnExample::InstallSensor()
-{
-	NS_LOG_INFO ("Installing Sensors");
-	NodeSensorHelper sensorHelper;
-	sensorHelper.SetSensorModel("ns3::ndn::nrndn::SumoNodeSensor",
-			"sumodata",PointerValue(mobility));
-	sensorHelper.InstallAll();
-}
-/*
+//测试使用，不必看
 void nrndnExample::InstallTestApplications()
 {
 	//This test use 3 nodes, Consumer A and B send different interest to Producer C.
@@ -685,7 +738,7 @@ void nrndnExample::InstallTestApplications()
 	//If you send the same interest packet for several times, the data producer will
 	//response your interest packet respectively. It may be a waste. So we can set Consumer::MaxSeq
 	//To limit the times interest packet send. For example,just 1.0
-	consumerHelper.SetAttribute ("MaxSeq""Maximum sequence number to request",IntegerValue(10));
+	consumerHelper.SetAttribute ("MaxSeq",IntegerValue(10));
 	consumerHelper.Install (nodes.Get(0));
 	consumerHelper.SetPrefix ("/prefix1");
 	consumerHelper.Install (nodes.Get(1));
@@ -694,37 +747,9 @@ void nrndnExample::InstallTestApplications()
 	producerHelper.SetPrefix ("/prefix0");
 	producerHelper.SetAttribute ("PayloadSize", StringValue("1200"));
 	producerHelper.Install (nodes.Get (2));
-
 }
 */
 
-void nrndnExample::InstallTraffics()
-{
-	/*
-	SeedManager::SetSeed(1234);
-	UniformVariable rnd(0,nodes.GetN());
-	std::cout<<"插入事件："<<accidentNum<<endl;
-	for(uint32_t i=0;i<accidentNum;++i)
-	{
-		uint32_t index=rnd.GetValue();
-		Ptr<ns3::ndn::nrndn::nrProducer> producer= DynamicCast<ns3::ndn::nrndn::nrProducer>(
-				nodes.Get(index)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"]));
-		NS_ASSERT(producer);
-		producer->addAccident();
-
-	}
-	std::cout<<"插入事件：完毕"<<endl;
-*/
-	/*
-	uint32_t InsertIndex=10;//for debug only
-	Ptr<ns3::ndn::nrndn::nrProducer> p= DynamicCast<ns3::ndn::nrndn::nrProducer>(
-					nodes.Get(InsertIndex)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"]));
-	p->ScheduleAccident(10);
-	p->ScheduleAccident(13);
-	p->ScheduleAccident(15);
-	*/
-}
-/*
 void nrndnExample::InstallDistApplications()
 {
 	NS_LOG_INFO ("Installing Dist Applications");
@@ -774,37 +799,4 @@ void nrndnExample::InstallCDSApplications()
 		(*i)->GetApplication(nrUtils::appIndex["ns3::ndn::nrndn::nrProducer"])->SetAttribute("StopTime", TimeValue (Seconds (stop )));
 	}
 }
-*/
-
-
-void
-nrndnExample::getStatistic()
-{
-	//1. get average arrival rate
-	//arrivalRate = nrUtils::GetAverageArrivalRate();
-
-	//2. get average accurate rate
-	//accuracyRate=nrUtils::GetAverageAccurateRate();
-
-	//3. get average hit rate
-	hitRate = nrUtils::GetAverageHitRate();
-
-	//4. get average delay
-	averageDelay = nrUtils::GetAverageDelay();
-
-	//5. get average data forward times
-	ForwardTimes = nrUtils::GetForwardTimes();
-
-	//6. get average interest forward times
-	averageInterestForwardTimes = nrUtils::GetAverageInterestForwardTimes();
-
-	averageDataForwardTimes = nrUtils::GetAverageInterestForwardTimes();
-
-	interestNum = nrUtils::GetInterestNum();
-
-	detectTimes = nrUtils::GetDetectTimes();
-
-	//SumForwardTimes = AverageDataForwardPair.first + AverageInterestForwardPair.first;
-}
-
 

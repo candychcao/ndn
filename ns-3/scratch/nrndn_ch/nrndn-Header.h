@@ -112,14 +112,13 @@ public:
 		return m_type;
 	}
 
-	void setTTL(uint32_t ttl)
-	{
-			m_TTL= ttl;
+	uint32_t getTTL(){
+		return m_TTL;
 	}
 
-	uint32_t getTTL ()
-	{
-			return m_TTL;
+	void setTTL(uint32_t ttl){
+			m_TTL = ttl;
+
 	}
 
 	//\}

@@ -152,19 +152,18 @@ uint32_t nrndnHeader::Deserialize(Buffer::Iterator start)
 
 	uint32_t dist = i.GetDistanceFrom(start);
 	NS_ASSERT(dist == GetSerializedSize());
-	//this->Print(std::cout);
 	return dist;
 }
 
 void nrndnHeader::Print(std::ostream& os) const
 {
-	os<<"nrndnHeader content: "
+	os<<"nrnddnHeader content: "
 			<<" NodeID="<<m_sourceId
 			<<" coordinate = ("<<m_x<<","<<m_y<<")"
 			<<" type="<<m_type
 			<<" TTL="<<m_TTL
 			<<" preLane=" <<m_preLane
-			<<" currentLane=" << m_currentLane
+			<<" currentLane=" << m_currentLane << std::endl
 			<<" laneList=";
 	for(std::vector<std::string>::const_iterator it = m_laneList.begin(); it != m_laneList.end(); ++it)
 		os<<(*it)<<" ";

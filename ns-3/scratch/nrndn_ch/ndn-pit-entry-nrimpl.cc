@@ -40,37 +40,23 @@ EntryNrImpl::~EntryNrImpl ()
 std::unordered_set< std::string  >::iterator
 EntryNrImpl::AddIncomingNeighbors(std::string lane)
 {
-	std::cout<<"add PIT incomingNeighbors"<<std::endl;
-	if(m_incomingnbs.empty())
-	{
+	if(m_incomingnbs.empty()){
 			m_incomingnbs.insert(lane);
-			this->Print(std::cout);
 			return m_incomingnbs.begin();
-	}
+		}
 	//AddNeighborTimeoutEvent(id);
 	std::unordered_set< std::string >::iterator incomingnb = m_incomingnbs.find(lane);
 
 	if(incomingnb==m_incomingnbs.end())
 	{//Not found
-		std::pair<std::unordered_set< std::string >::iterator,bool> ret = m_incomingnbs.insert (lane);
-		this->Print(std::cout);
+		std::pair<std::unordered_set< std::string >::iterator,bool> ret =
+				m_incomingnbs.insert (lane);
 		return ret.first;
 	}
 	else
 	{
-		this->Print(std::cout);
 		return incomingnb;
 	}
-}
-
-void EntryNrImpl::setNb(std::unordered_set< std::string > nb)
-{
-	m_incomingnbs = nb;
-}
-
-void EntryNrImpl::setInterestName(std::string name)
-{
-	m_interest_name = name;
 }
 
 /*void EntryNrImpl::AddNeighborTimeoutEvent(uint32_t id)
@@ -111,12 +97,9 @@ void EntryNrImpl::CleanExpiredIncomingNeighbors(uint32_t id)
 }*/
 
 //add by DJ on Jan 4,2016:when it receives corresponding data packet,remove the pit entry
-void EntryNrImpl::RemoveIncomingNeighbors(std::string name)
-{
-	std::cout<<"remove pit incoming neighbors"<<std::endl;
+void EntryNrImpl::RemoveIncomingNeighbors(std::string name){
 	std::unordered_set< std::string >::iterator it;
-    if(name==m_interest_name)
-    {
+    if(name==m_interest_name){
     	for(it=m_incomingnbs.begin();it!=m_incomingnbs.end();++it)
     		{
     			m_incomingnbs.erase(it);
@@ -127,13 +110,16 @@ void EntryNrImpl::RemoveIncomingNeighbors(std::string name)
 
 void EntryNrImpl::Print(std::ostream& os) const
 {
-	os<<"PIT Entry content: "<<" interest name: "<<m_interest_name<<" ";
+	os<<"nrndnEntryNrImpl content: "
+			<<" interest name="<<m_interest_name;
 	for(std::unordered_set< std::string >::const_iterator it = m_incomingnbs.begin(); it != m_incomingnbs.end(); ++it)
 		os<<(*it)<<" ";
 	os<<std::endl;
 }
 
-
+void EntryNrImpl::setInterestName(std::string name){
+	m_interest_name = name;
+}
 
 /*
 void EntryNrImpl::RemoveAllTimeoutEvent()
