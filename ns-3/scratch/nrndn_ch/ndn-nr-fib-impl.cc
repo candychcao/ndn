@@ -115,7 +115,7 @@ NrFibImpl::RemoveFromAll (Ptr<Face> face){
 void
 NrFibImpl::AddFibEntry (const Ptr<const Name> &prefix, std::string lane,uint32_t ttl)
 {
-	std::cout<<"add FIB Entry name:"<<prefix->toUri()<<" lane:"<<lane<<" TTL:"<<ttl<<std::endl;
+	//std::cout<<"add FIB Entry name:"<<prefix->toUri()<<" lane:"<<lane<<" TTL:"<<ttl<<std::endl;
 	if(m_fibContainer.empty())
 	{
 		Ptr<EntryNrImpl> entry = ns3::Create<EntryNrImpl>(this,prefix,m_cleanInterval);

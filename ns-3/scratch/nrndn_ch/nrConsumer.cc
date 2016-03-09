@@ -146,7 +146,7 @@ void nrConsumer::SendPacket()
 
 void nrConsumer::OnData(Ptr<const Data> data)
 {
-
+	 if (!m_active) return;
 	NS_LOG_FUNCTION (this);
 	Ptr<Packet> nrPayload	= data->GetPayload()->Copy();
 	const Name& name = data->GetName();
@@ -172,6 +172,7 @@ void nrConsumer::OnData(Ptr<const Data> data)
 
 void nrConsumer::laneChange(std::string oldLane, std::string newLane)
 {
+	 if (!m_active) return;
 	if(interestSent.empty())
 		return;
 	if(oldLane == m_oldLane)
@@ -182,10 +183,11 @@ void nrConsumer::laneChange(std::string oldLane, std::string newLane)
 	  cout<<m_node->GetId()<<" lane changed from "<<oldLane<<" to "<<newLane<<endl;
 
 	  uint32_t num = GetNode()->GetId() % 3 + 1;
-	  m_prefix.appendNumber(num);
+	  Name prefix("/");
+	  prefix.appendNumber(num);
 
 	  Ptr<Interest> interest = Create<Interest> (Create<Packet>(m_virtualPayloadSize));
-	  Ptr<Name> interestName = Create<Name> (m_prefix);
+	  Ptr<Name> interestName = Create<Name> (prefix);
 	  interest->SetName(interestName);
 	  interest->SetNonce(m_rand.GetValue());//just generate a random number
 	  interest->SetInterestLifetime    (m_interestLifeTime);
@@ -204,7 +206,7 @@ void nrConsumer::laneChange(std::string oldLane, std::string newLane)
 	  newPayload->AddHeader(nrheader);
 	  interest->SetPayload(newPayload);
 
-	  cout<<"node: "<<GetNode()->GetId()<<"  send MOVE_TO_NEW_LANE packet,name: "<<m_prefix.toUri()<<" in consumer"<<endl;
+	  cout<<"node: "<<GetNode()->GetId()<<"  send MOVE_TO_NEW_LANE packet,name: "<<prefix.toUri()<<" in consumer"<<endl;
 
 	  m_transmittedInterests (interest, this, m_face);
 	  m_face->ReceiveInterest (interest);

@@ -373,7 +373,7 @@ void NavigationRouteHeuristic::OnInterest(Ptr<Face> face,
 	{
 		if(!isDuplicatedInterest(nodeId,seq) && m_sensor->getLane() == preLane)
 		{
-			cout<<"node: "<<m_node->GetId()<<" receive MOVE_TO_NEW_LANE packet from "<<nodeId<<endl;
+			cout<<"node: "<<m_node->GetId()<<" receive MOVE_TO_NEW_LANE packet from "<<nodeId<<" new lane: "<<currentLane<<endl;
 			m_pit->UpdatePit(currentLane, interest);
 
 			Time sendInterval = MilliSeconds(distance);
@@ -844,7 +844,7 @@ void NavigationRouteHeuristic::ForwardMoveToNewLanePacket(Ptr<Interest> src)
 		nrPayload->PeekHeader(nrheader);
 
 	m_interestNonceSeen.Put(src->GetNonce(),true);
-	cout<<"node: "<<m_node->GetId()<<" forward MOVE_TO_NEW_LANE packet from "<<nrheader.getSourceId()<<endl;
+	cout<<"node: "<<m_node->GetId()<<" forward MOVE_TO_NEW_LANE packet from "<<nrheader.getSourceId()<<" new lane: "<<nrheader.getCurrentLane()<<" NONCE: "<<src->GetNonce()<<endl;
 	SendInterestPacket(src);
 }
 
