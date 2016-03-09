@@ -247,7 +247,8 @@ void NavigationRouteHeuristic::OnInterest(Ptr<Face> face,
 
 		if(interest->GetScope() == MOVE_TO_NEW_LANE)
 			PrepareMoveToNewLanePacket(interest);
-		else if(m_fib->Find(interest->GetName()))
+
+		else if (m_fib->Find(interest->GetName()))
 			PrepareInterestPacket(interest);
 		else
 			PrepareDetectPacket(interest);
@@ -840,6 +841,7 @@ void NavigationRouteHeuristic::ForwardMoveToNewLanePacket(Ptr<Interest> src)
 
 	Ptr<Packet> nrPayload=src->GetPayload()->Copy();
 		ndn::nrndn::nrndnHeader nrheader;
+		nrPayload->PeekHeader(nrheader);
 
 	m_interestNonceSeen.Put(src->GetNonce(),true);
 	cout<<"node: "<<m_node->GetId()<<" forward MOVE_TO_NEW_LANE packet from "<<nrheader.getSourceId()<<endl;
@@ -1020,7 +1022,7 @@ void NavigationRouteHeuristic::PrepareInterestPacket(Ptr<Interest> interest)
 
 	Ptr<ndn::fib::nrndn::EntryNrImpl> nexthop;
 	nexthop = DynamicCast<ndn::fib::nrndn::EntryNrImpl>(m_fib->Find(interest->GetName()));
-	std:: string hop;
+	std:: string hop = "";
 	hop = (nexthop->getIncomingnbs()).begin()->first	;
 	nrheader.setCurrentLane(hop);
 	nrPayload->AddHeader(nrheader);

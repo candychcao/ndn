@@ -93,9 +93,10 @@ bool NrPitImpl::UpdatePit(std::string lane,Ptr<Interest> interest)
 	{
 		Ptr<fib::Entry> fibEntry=ns3::Create<fib::Entry>(Ptr<Fib>(0),Ptr<Name>(0));
 		Ptr<EntryNrImpl> fentry = ns3::Create<EntryNrImpl>(*this,interest,fibEntry);
+		fentry->AddIncomingNeighbors(lane);
 		Ptr<Entry> pitEntry = DynamicCast<Entry>(fentry);
 		m_pitContainer.push_back(pitEntry);
-		this->Print(std::cout);
+		//this->Print(std::cout);
 		return true;;
 	}
 	else
@@ -113,15 +114,16 @@ bool NrPitImpl::UpdatePit(std::string lane,Ptr<Interest> interest)
 			{
 				pitEntry->AddIncomingNeighbors(lane);
 			}
-			this->Print(std::cout);
+			//this->Print(std::cout);
 			return true;
 		}
 	}
 	    Ptr<fib::Entry> fibEntry=ns3::Create<fib::Entry>(Ptr<Fib>(0),Ptr<Name>(0));
 	    Ptr<EntryNrImpl> fentry = ns3::Create<EntryNrImpl>(*this,interest,fibEntry);
+	    fentry->AddIncomingNeighbors(lane);
 		Ptr<Entry> pitEntry = DynamicCast<Entry>(fentry);
 		m_pitContainer.push_back(pitEntry);
-		this->Print(std::cout);
+		//this->Print(std::cout);
 	}
 	return true;
 }
@@ -138,11 +140,11 @@ bool NrPitImpl::RemovePitEntry(const Name& name)
 		{
 			//pitEntry->RemoveIncomingNeighbors(name.toUri());
 			m_pitContainer.erase(pit);
-			this->Print(std::cout);
+			//this->Print(std::cout);
 			return true;
 		}
 	}
-	this->Print(std::cout);
+	//this->Print(std::cout);
 	return false;
 }
 

@@ -119,9 +119,10 @@ NrFibImpl::AddFibEntry (const Ptr<const Name> &prefix, std::string lane,uint32_t
 	if(m_fibContainer.empty())
 	{
 		Ptr<EntryNrImpl> entry = ns3::Create<EntryNrImpl>(this,prefix,m_cleanInterval);
+		entry->AddIncomingNeighbors(lane, ttl);
 		Ptr<Entry> fibEntry = DynamicCast<Entry>(entry);
 		m_fibContainer.push_back(fibEntry);
-		this->Print(std::cout);
+		//this->Print(std::cout);
 		return;
 	}
 	else
@@ -133,14 +134,15 @@ NrFibImpl::AddFibEntry (const Ptr<const Name> &prefix, std::string lane,uint32_t
 			if(fibEntry->getEntryName() == prefix->toUri())
 			{
 				fibEntry->AddIncomingNeighbors(lane,ttl);
-				this->Print(std::cout);
+				//this->Print(std::cout);
                 return;
 			}
 		}
-	Ptr<EntryNrImpl> entry = ns3::Create<EntryNrImpl>(this,prefix,m_cleanInterval);
-	Ptr<Entry> fibEntry = DynamicCast<Entry>(entry);
-	m_fibContainer.push_back(fibEntry);
-	this->Print(std::cout);
+		Ptr<EntryNrImpl> entry = ns3::Create<EntryNrImpl>(this,prefix,m_cleanInterval);
+		entry->AddIncomingNeighbors(lane, ttl);
+		Ptr<Entry> fibEntry = DynamicCast<Entry>(entry);
+		m_fibContainer.push_back(fibEntry);
+		//this->Print(std::cout);
 	}
     return;
 }
@@ -169,7 +171,9 @@ NrFibImpl::Find (const Name &prefix)
 	 for(it=m_fibContainer.begin();it!=m_fibContainer.end();++it)
 	 {
 		 if((*it)->GetPrefix()==prefix)
+		 {
 			 return *it;
+		 }
 	 }
 	return 0;
 }

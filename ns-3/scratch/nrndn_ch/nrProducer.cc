@@ -121,11 +121,12 @@ void nrProducer::sendResourcePacket()
 	if (!m_active)  return;
 
 	uint32_t num = GetNode()->GetId() % 3 + 1;
+	Name prefix("/");
 	//std::cout<<"siu:"<<GetNode()->GetId()<<"sendResourcePacket:"<<m_prefix.toUri()<<std::endl;
-	m_prefix.appendNumber(num);
-	std::cout<<"siu:"<<GetNode()->GetId()<<"sendResourcePacket:"<<m_prefix.toUri()<<std::endl;
+	prefix.appendNumber(num);
+	std::cout<<"siu:"<<GetNode()->GetId()<<"sendResourcePacket:"<<prefix.toUri()<<std::endl;
 	Ptr<Data> data = Create<Data>(Create<Packet>(m_virtualPayloadSize));
-	Ptr<Name> dataName = Create<Name>(m_prefix);
+	Ptr<Name> dataName = Create<Name>(prefix);
 	//dataName->append(m_postfix);
 
 	data->SetName(dataName);

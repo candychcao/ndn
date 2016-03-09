@@ -45,7 +45,7 @@ EntryNrImpl::AddIncomingNeighbors(std::string lane,uint32_t ttl)
 	if(m_incomingnbs.empty())
 	{
 		m_incomingnbs.insert(m_incomingnbs.begin(),std::pair<std::string,uint32_t>(lane,ttl));
-		this->Print(std::cout);
+		//this->Print(std::cout);
 		return m_incomingnbs.begin();
 	}
 	//AddNeighborTimeoutEvent(id);
@@ -57,17 +57,17 @@ EntryNrImpl::AddIncomingNeighbors(std::string lane,uint32_t ttl)
 				//m_incomingnbs.insert (lane);
 		//return ret.first;
 		incomingnb = m_incomingnbs.begin();
-		while(incomingnb->second < ttl)
+		while(incomingnb != m_incomingnbs.end() && incomingnb->second < ttl)
 		{
 			incomingnb++;
 		}
 		m_incomingnbs.insert(incomingnb,std::pair<std::string,uint32_t>(lane,ttl));
-		this->Print(std::cout);
+		//this->Print(std::cout);
 		return incomingnb;
 	}
 	else
 	{
-		this->Print(std::cout);
+		//this->Print(std::cout);
 		return incomingnb;
 	}
 }

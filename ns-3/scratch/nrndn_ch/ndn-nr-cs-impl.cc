@@ -94,13 +94,13 @@ bool NrCsImpl::Add (Ptr<const Data> data)
 	std::cout<<"add CS Entry  name:"<<data->GetName().toUri()<<std::endl;
 	if(Find(data->GetName()))
 	{
-		this->Print(std::cout);
+		//this->Print(std::cout);
 		return true;
 	}
     Ptr<cs::Entry> csEntry = ns3::Create<cs::Entry>(this,data) ;
     m_csContainer.push_back(csEntry);
 
-    this->Print(std::cout);
+    //this->Print(std::cout);
 	return true;
 }
 

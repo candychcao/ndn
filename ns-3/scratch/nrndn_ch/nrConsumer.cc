@@ -105,13 +105,15 @@ void nrConsumer::ScheduleNextPacket()
 
 void nrConsumer::SendPacket()
 {
+
 	  if (!m_active) return;
 
 	  uint32_t num = GetNode()->GetId() % 3 + 1;
-	  m_prefix.appendNumber(num);
+	  Name prefix("/");
+	  prefix.appendNumber(num);
 
 	  Ptr<Interest> interest = Create<Interest> (Create<Packet>(m_virtualPayloadSize));
-	  Ptr<Name> interestName = Create<Name> (m_prefix);
+	  Ptr<Name> interestName = Create<Name> (prefix);
 	  interest->SetName(interestName);
 	  interest->SetNonce(m_rand.GetValue());//just generate a random number
 	  interest->SetInterestLifetime    (m_interestLifeTime);
@@ -129,20 +131,22 @@ void nrConsumer::SendPacket()
 	  newPayload->AddHeader(nrheader);
 	  interest->SetPayload(newPayload);
 
-	  cout<<"node: "<<GetNode()->GetId()<<"  send interest packet,name: "<<m_prefix.toUri()<<" in consumer"<<endl;
+	  cout<<"node: "<<GetNode()->GetId()<<"  send interest packet,name: "<<prefix.toUri()<<" in consumer"<<endl;
 
 	  m_transmittedInterests (interest, this, m_face);
 	  m_face->ReceiveInterest (interest);
 
-	  interestSent[interest->GetNonce()] = m_prefix.toUri() ;
+	  interestSent[interest->GetNonce()] = prefix.toUri() ;
 	  msgTime[interest->GetNonce()] = Simulator::Now().GetSeconds();
 
 	  nrUtils::IncreaseNodeCounter();
 	  nrUtils::IncreaseInterestSum();
+
 }
 
 void nrConsumer::OnData(Ptr<const Data> data)
 {
+
 	NS_LOG_FUNCTION (this);
 	Ptr<Packet> nrPayload	= data->GetPayload()->Copy();
 	const Name& name = data->GetName();
@@ -163,6 +167,7 @@ void nrConsumer::OnData(Ptr<const Data> data)
 		std::cout<<m_node->GetId()<<"\treceived data "<<name.toUri()<<" from "<<nodeId<<"\tSignature "<<signature<<endl;
 		interestSent.erase(it);
 	}
+
 }
 
 void nrConsumer::laneChange(std::string oldLane, std::string newLane)
