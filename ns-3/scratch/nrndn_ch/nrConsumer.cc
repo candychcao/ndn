@@ -44,10 +44,10 @@ TypeId nrConsumer::GetTypeId()
    			                           StringValue ("/"),
 	    			                    MakeNameAccessor (&nrConsumer::m_prefix),
 	    			                    MakeNameChecker ())
-//		    .AddAttribute("sensor", "The vehicle sensor used by the nrConsumer.",
-//		    	   	    		PointerValue (),
-//		    	   	    		MakePointerAccessor (&nrConsumer::m_sensor),
-//		    	   	    		MakePointerChecker<ns3::ndn::nrndn::NodeSensor> ())
+		    .AddAttribute("sensor", "The vehicle sensor used by the nrConsumer.",
+	    	   	    		PointerValue (),
+		    	   	    	MakePointerAccessor (&nrConsumer::m_sensor),
+	    	   	    		MakePointerChecker<ns3::ndn::nrndn::NodeSensor> ())
 		    .AddAttribute ("PayloadSize", "Virtual payload size for traffic Content packets",
 		    		            UintegerValue (1024),
 		    	                MakeUintegerAccessor (&nrConsumer::m_virtualPayloadSize),
@@ -98,7 +98,7 @@ void nrConsumer::ScheduleNextPacket()
 	if(GetNode()->GetId() > 30)
 		return;
 
-	double delay =( GetNode()->GetId() - 9 ) * 5 + 20;
+	double delay =( GetNode()->GetId()  - 9 ) * 2 + 60;
 
 	Simulator::Schedule (Seconds (delay), & nrConsumer::SendPacket, this);
 }
@@ -116,7 +116,7 @@ void nrConsumer::SendPacket()
 	  Ptr<Name> interestName = Create<Name> (prefix);
 	  interest->SetName(interestName);
 	  interest->SetNonce(m_rand.GetValue());//just generate a random number
-	  interest->SetInterestLifetime    (m_interestLifeTime);
+	  //interest->SetInterestLifetime    (m_interestLifeTime);
 
 	   //add header;
 	  ndn::nrndn::nrndnHeader nrheader;
