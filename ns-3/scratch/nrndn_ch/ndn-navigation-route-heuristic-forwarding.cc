@@ -393,7 +393,7 @@ void NavigationRouteHeuristic::OnInterest(Ptr<Face> face,
 	}
 	else if(ASK_FOR_TABLE == interest->GetScope())
 	{
-		if(m_sensor->getLane() == currentLane)
+		if(m_sensor->getLane() == currentLane && !m_pit->getPIT().empty() && !m_fib->getFIB().empty())
 		{
 			cout<<"node: "<<m_node->GetId()<<" receive ASK_FOR_TABLE packet from "<<nodeId<<endl;
 			Time sendInterval = MilliSeconds(distance);
