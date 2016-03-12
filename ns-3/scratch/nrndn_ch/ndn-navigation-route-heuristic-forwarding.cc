@@ -393,7 +393,7 @@ void NavigationRouteHeuristic::OnInterest(Ptr<Face> face,
 	}
 	else if(ASK_FOR_TABLE == interest->GetScope())
 	{
-		if(m_sensor->getLane() == currentLane && !m_pit->getPIT().empty() && !m_fib->getFIB().empty())
+		if(m_sensor->getLane() == currentLane && !m_fib->getFIB().empty())
 		{
 			cout<<"node: "<<m_node->GetId()<<" receive ASK_FOR_TABLE packet from "<<nodeId<<endl;
 			Time sendInterval = MilliSeconds(distance);
@@ -845,10 +845,10 @@ void NavigationRouteHeuristic::ForwardMoveToNewLanePacket(Ptr<Interest> src)
 	cout<<"node: "<<m_node->GetId()<<" forward MOVE_TO_NEW_LANE packet from "<<nrheader.getSourceId()<<" new lane: "<<nrheader.getCurrentLane()<<" NONCE: "<<src->GetNonce()<<endl;
 
 	nrPayload->AddHeader(nrheader);
-	Ptr<Interest> interest = Create<Interest> (*src);
-	interest->SetPayload(nrPayload);
+	//Ptr<Interest> interest = Create<Interest> (*src);
+	 src->SetPayload(nrPayload);
 
-	SendInterestPacket(interest);
+	SendInterestPacket( src);
 }
 
 void NavigationRouteHeuristic::ForwardInterestPacket(Ptr<Interest> src)
@@ -961,15 +961,17 @@ void NavigationRouteHeuristic::ReplyTablePacket(Ptr<Interest> interest)
 
 	ndn::nrndn::tableHeader tableheader;
 	tableheader.setSourceId(sourceid);
-	tableheader.setPIT(m_pit->getPIT());
+	if(!m_pit->getPIT().empty())
+		tableheader.setPIT(m_pit->getPIT());
 	tableheader.setFIB(m_fib->getFIB());
 
 	Ptr<Packet> newPayload	= Create<Packet> ();
 	newPayload->AddHeader(tableheader);
-	data->SetPayload(newPayload);
 
 	ndn::nrndn::PacketTypeTag typeTag(TABLE_PACKET );
-	data->GetPayload()->AddPacketTag(typeTag);
+	newPayload->AddPacketTag(typeTag);
+
+	data->SetPayload(newPayload);
 
 	m_dataSignatureSeen.Put(data->GetSignature(),true);
 	cout<<"node: "<<m_node->GetId()<<" reply table packet to "<<nrheader.getSourceId()<<endl;
