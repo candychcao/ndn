@@ -118,6 +118,10 @@ private:
 
 	void laneChange(std::string, std::string);
 
+	bool isJuction(std::string lane);
+
+	bool isSameLane(std::string lane1, std::string lane2);
+
 
 	void ExpireInterestPacketTimer(uint32_t nodeId,uint32_t seq);
 

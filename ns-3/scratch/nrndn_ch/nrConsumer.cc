@@ -107,6 +107,11 @@ void nrConsumer::SendPacket()
 {
 
 	  if (!m_active) return;
+	  if(isJuction(m_sensor->getLane()))
+	  {
+		  Simulator::Schedule (Seconds (5.0), & nrConsumer::SendPacket, this);
+		  return;
+	  }
 
 	  uint32_t num = GetNode()->GetId() % 3 + 1;
 	  Name prefix("/");
@@ -173,10 +178,9 @@ void nrConsumer::OnData(Ptr<const Data> data)
 void nrConsumer::laneChange(std::string oldLane, std::string newLane)
 {
 	 if (!m_active) return;
-	if(interestSent.empty())
-		return;
-	if(oldLane == m_oldLane)
-		return;
+	if(interestSent.empty()) return;
+	if(isJuction(newLane) ) return;
+	if(oldLane == m_oldLane) return;
 
 	m_oldLane = oldLane;
 
@@ -210,6 +214,14 @@ void nrConsumer::laneChange(std::string oldLane, std::string newLane)
 
 	  m_transmittedInterests (interest, this, m_face);
 	  m_face->ReceiveInterest (interest);
+}
+
+bool nrConsumer::isJuction(std::string lane)
+{
+	for(uint32_t i = 0; i<lane.length(); ++i)
+		if(lane[i] == 't')
+			return false;
+	return true;
 }
 
 void nrConsumer::NotifyNewAggregate()

@@ -115,10 +115,23 @@ void nrProducer::OnInterest(Ptr<const Interest> interest)
 				" receive Interest Packet!!");
 }
 
+bool nrProducer::isJuction(string lane)
+{
+	for(uint32_t i = 0; i<lane.length(); ++i)
+		if(lane[i] == 't')
+			return false;
+	return true;
+}
+
 void nrProducer::sendResourcePacket()
 {
 	////m_sensor->getLane();
 	if (!m_active)  return;
+	if(isJuction(m_sensor->getLane()))
+	{
+		 Simulator::Schedule (Seconds (5.0), &nrProducer::sendResourcePacket, this);
+		 return;
+	}
 
 	uint32_t num = GetNode()->GetId() % 3 + 1;
 	Name prefix("/");

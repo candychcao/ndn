@@ -69,6 +69,8 @@ protected:
 
 	  void laneChange(std::string, std::string);
 
+	  bool isJuction(std::string lane);
+
 	  /**
 	   * \brief get the current route for the interests
 	   */
