@@ -470,31 +470,28 @@ void NavigationRouteHeuristic::OnData(Ptr<Face> face, Ptr<Data> data)
 	double disX = ( x - m_sensor->getX()) > 0 ? (x - m_sensor->getX()) : (m_sensor->getX() - x);
 	double disY = ( y - m_sensor->getY()) > 0 ? (y - m_sensor->getY()) : (m_sensor->getY() - y);
 	double distance = disX + disY;
-	double interval = (500 - distance) * 10;
+	double interval = (500 - distance) ;
 
 	if(RESOURCE_PACKET == packetTypeTag.Get())
 	{
-		if(!isDuplicatedData(nodeId,signature) && !isJuction(m_sensor->getLane()))
-		{
-			//cout<<"node: "<<m_node->GetId()<<" receive resource packet from node: "<<nodeId<<" name:"<<data->GetName().toUri()<<" lane:"<<currentLane<<" ttl:"<<hopCountTag.Get()<<endl;
-
-			if(isSameLane(m_sensor->getLane(),currentLane))
-				m_fib-> AddFibEntry(data->GetNamePtr(),preLane, hopCountTag.Get() );
-			else
-				m_fib-> AddFibEntry(data->GetNamePtr(),currentLane, hopCountTag.Get() );
-
-			Time sendInterval = (MilliSeconds(interval) + m_gap * m_timeSlot);
-			m_sendingDataEvent[nodeId][signature]=
-								Simulator::Schedule(sendInterval,
-								&NavigationRouteHeuristic::ForwardResourcePacket, this,data);
-			return;
-		}//end if(!isDuplicatedData(nodeId,signature))
-		else   //重复包
+		if(isJuction(m_sensor->getLane() )|| isSameLane(m_sensor->getLane(), currentLane))
 		{
 			ExpireDataPacketTimer(nodeId,signature);
 			m_dataSignatureSeen.Put(data->GetSignature(),true);
 			return;
-		}//end duplicate packet
+		}
+		else
+		{
+			if(isSameLane(m_sensor->getLane(),currentLane))
+					m_fib-> AddFibEntry(data->GetNamePtr(),preLane, hopCountTag.Get() );
+			else
+					m_fib-> AddFibEntry(data->GetNamePtr(),currentLane, hopCountTag.Get() );
+
+			Time sendInterval = (MilliSeconds(interval) + m_gap * m_timeSlot);
+			m_sendingDataEvent[nodeId][signature]=
+								Simulator::Schedule(sendInterval, &NavigationRouteHeuristic::ForwardResourcePacket, this,data);
+			return;
+		}
 	}//end if (RESOURCE_PACKET == packetTypeTag.Get())
 	else if (DATA_PACKET == packetTypeTag.Get())
 	{
@@ -647,6 +644,7 @@ void NavigationRouteHeuristic::ForwardResourcePacket(Ptr<Data> src)
 {
 	if(!m_running) return;
 
+	m_dataSignatureSeen.Put(src->GetSignature(),true);
 	Ptr<Packet> nrPayload=src->GetPayload()->Copy();
 	//Ptr<Packet> newPayload	= Create<Packet> ();
 	ndn::nrndn::nrndnHeader nrheader;
@@ -655,7 +653,7 @@ void NavigationRouteHeuristic::ForwardResourcePacket(Ptr<Data> src)
 	double y= m_sensor->getY();
 	std::string currentlane = m_sensor->getLane();
 	std::string prelane;
-	if(currentlane == nrheader.getCurrentLane() )
+	if(isSameLane(currentlane, nrheader.getCurrentLane() )  )
 		prelane = nrheader.getPreLane();
 	else
 		prelane = nrheader.getCurrentLane();
@@ -681,7 +679,7 @@ void NavigationRouteHeuristic::ForwardResourcePacket(Ptr<Data> src)
 	Ptr<Data> data = Create<Data> (*src);
 	data->SetPayload(nrPayload);
 
-	m_dataSignatureSeen.Put(src->GetSignature(),true);
+
 	cout<<"node: "<<m_node->GetId()<<" forward resource packet from "<<nrheader.getSourceId()<<" name:"<<data->GetName().toUri ()<<" lane:"<<nrheader.getCurrentLane()<<" ttl:"<<(hopCountTag.Get()+1)<<endl;
 	SendDataPacket(data);
 
@@ -704,7 +702,7 @@ void NavigationRouteHeuristic::ForwardConfirmPacket(Ptr<Data> src)
 	{
 		if(i == 0)
 			currentlane = lanelist[i];
-		else if(m_sensor->getLane() == lanelist[i])
+		else if(isSameLane(m_sensor->getLane() ,  lanelist[i]))
 		{
 			currentlane = lanelist[i-1];
 			break;
@@ -803,7 +801,7 @@ void NavigationRouteHeuristic::ForwardDetectPacket(Ptr<Interest> src)
 	std::vector<std::string> lanelist = nrheader.getLaneList();
 
 	for(int i=0; i<lanelist.size(); ++i)
-		if(m_sensor->getLane() == lanelist[i])
+		if(isSameLane(m_sensor->getLane() ,  lanelist[i]))
 			return;
 
 	lanelist.push_back(m_sensor->getLane() );
@@ -907,7 +905,7 @@ void NavigationRouteHeuristic::ReplyConfirmPacket(Ptr<Interest> interest)
 	std::string currentlane = nrheader.getLaneList()[0] ;
 	for(uint32_t i = nrheader.getLaneList().size()-1; i>=0; --i)
 	{
-		if( nrheader.getLaneList()[i] != m_sensor->getLane() )
+		if(!isSameLane(m_sensor->getLane() , nrheader.getLaneList()[i]) )
 		{
 			currentlane = nrheader.getLaneList()[i];
 			break;
